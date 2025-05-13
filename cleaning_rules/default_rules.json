@@ -1,0 +1,53 @@
+{
+  "name": "默认规则",
+  "drop_rules": {
+    "dropna": false,
+    "drop_duplicates": false
+  },
+  "drop_rules": {
+    "dropna": false,
+    "drop_duplicates": false
+  },
+  "replace_rules": {
+    "BloodPressure": {
+      "type": "numeric",
+      "replacements": {
+        "0": {"method": "median"}
+      }
+    },
+    "BMI": {
+      "type": "numeric",
+      "replacements": {
+        "0": {"method": "median"}
+      }
+    },
+    "Insulin": {
+      "type": "numeric",
+      "replacements": {
+        "0": {"method": "median"}
+      }
+    },
+    "SkinThickness": {
+      "type": "numeric",
+      "replacements": {
+        "0": {"method": "median"}
+      }
+    }
+  },
+  "type_conversion": {
+    "BloodPressure": "Int64",
+    "BMI": "float64",
+    "Insulin": "Int64",
+    "SkinThickness": "Int64"
+  },
+  "range_rules": {
+    "Age": {
+      "min": 21,
+      "handle_out_of_range": "median"
+    },
+    "blood_glucose_level": {
+      "min": 0,
+      "handle_out_of_range": "median"
+    }
+  }
+}
