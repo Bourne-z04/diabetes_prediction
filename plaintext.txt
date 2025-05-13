@@ -1,0 +1,29 @@
+diabetes_prediction_system/
+├── app/
+│   ├── __init__.py
+│   ├── admin/
+│   │   ├── __init__.py
+│   │   └── views.py
+│   ├── auth/
+│   │   ├── __init__.py
+│   │   ├── forms.py
+│   │   ├── models.py
+│   │   └── routes.py
+│   ├── static/
+│   │   └── css/
+│   │       └── auth.css
+│   ├── templates/
+│   │   ├── admin/
+│   │   ├── auth/
+│   │   │   ├── login.html
+│   │   │   └── register.html
+│   │   ├── base.html
+│   │   └── user/
+│   └── utils.py
+├── config.py
+├── diabetes_prediction.sql
+├── plaintext.txt
+├── requirements.txt
+├── run.py
+└── uploads/
+└── requirements.txt
