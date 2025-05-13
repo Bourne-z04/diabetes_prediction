@@ -42,10 +42,7 @@ def clean_basic(df, rules):
                 for old_value, replacement in rule['replacements'].items():
                     mask = df[column] == float(old_value)
                     if replacement['method'] == 'median':
-                        if column=='BMI':
-                            df.loc[mask, column] = round(df[column].median())
-                        else:
-                            df.loc[mask, column] = df[column].median()
+                        df.loc[mask, column] = round(df[column].median())
                     elif replacement['method'] == 'mean':
                         df.loc[mask, column] = df[column].mean()
 
