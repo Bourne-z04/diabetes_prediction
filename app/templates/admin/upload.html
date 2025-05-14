@@ -1,0 +1,56 @@
+{% extends "base.html" %}
+{% block title %}数据上传{% endblock %}
+{% block content %}
+<div class="container">
+    <h2>数据上传</h2>
+    <form method="POST" enctype="multipart/form-data">
+        <div class="form-group">
+            <input type="file" name="file" class="form-control-file" accept=".csv">
+        </div>
+        <button type="submit" class="btn btn-primary">上传</button>
+    </form>
+
+    {% if headers and data %}
+    <div class="mt-4">
+        <h4>预览数据</h4>
+        <div class="table-responsive">
+            <table class="table table-bordered">
+                <thead>
+                    <tr>
+                        {% for header in headers %}
+                        <th>{{ header }}</th>
+                        {% endfor %}
+                    </tr>
+                </thead>
+                <tbody>
+                    {% for row in data %}
+                    <tr>
+                        {% for item in row %}
+                        <td>{{ item }}</td>
+                        {% endfor %}
+                    </tr>
+                    {% endfor %}
+                </tbody>
+            </table>
+        </div>
+    </div>
+    {% if create_table_sql and load_data_sql %}
+    <div class="mt-4">
+        <h4>SQL语句</h4>
+        <div class="card mb-3">
+            <div class="card-header">创建表</div>
+            <div class="card-body">
+                <code>{{ create_table_sql }}</code>
+            </div>
+        </div>
+        <div class="card">
+            <div class="card-header">导入数据</div>
+            <div class="card-body">
+                <code>{{ load_data_sql }}</code>
+            </div>
+        </div>
+    </div>
+    {% endif %}
+    {% endif %}
+</div>
+{% endblock %}

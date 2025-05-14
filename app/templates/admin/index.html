@@ -1,0 +1,12 @@
+{% extends "base.html" %}
+{% block title %}管理员界面{% endblock %}
+{% block content %}
+<div class="container">
+    <h1>管理员功能</h1>
+    <div class="list-group">
+        <a href="{{ url_for('admin.upload_file') }}" class="list-group-item list-group-item-action">1. 文件上传</a>
+        <a href="#" class="list-group-item list-group-item-action">2. 数据可视化</a>
+        <a href="#" class="list-group-item list-group-item-action">3. 数据分析</a>
+    </div>
+</div>
+{% endblock %}
