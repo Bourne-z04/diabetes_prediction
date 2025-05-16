@@ -1,0 +1,41 @@
+<!DOCTYPE html>
+<html>
+<head>
+    <title>糖尿病预测系统 - 测试</title>
+    <style>
+        .form-container { margin: 20px; padding: 20px; border: 1px solid #ccc; }
+        .form-group { margin-bottom: 10px; }
+        button { padding: 8px 15px; background: #4CAF50; color: white; border: none; }
+    </style>
+</head>
+<body>
+    <div class="form-container">
+        <h2>注册</h2>
+        <div class="form-group">
+            <input type="text" id="reg-username" placeholder="用户名">
+        </div>
+        <div class="form-group">
+            <input type="email" id="reg-email" placeholder="邮箱">
+        </div>
+        <div class="form-group">
+            <input type="password" id="reg-password" placeholder="密码">
+        </div>
+        <button onclick="register()">注册</button>
+    </div>
+
+    <div class="form-container">
+        <h2>登录</h2>
+        <div class="form-group">
+            <input type="email" id="login-email" placeholder="邮箱">
+        </div>
+        <div class="form-group">
+            <input type="password" id="login-password" placeholder="密码">
+        </div>
+        <button onclick="login()">登录</button>
+    </div>
+
+    <div id="result" style="margin: 20px;"></div>
+
+    <script src="app.js"></script>
+</body>
+</html>
