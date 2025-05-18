@@ -94,7 +94,7 @@
             })
             .then(response => {
                 document.getElementById('response').innerHTML = 
-                    `保存成功!<br>健康信息ID: ${response.data.health_info_id}<br>消息: ${response.data.message}`;
+                    `保存成功!<br>消息: ${response.data.message}`;
             })
             .catch(error => {
                 document.getElementById('response').innerHTML = 

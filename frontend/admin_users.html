@@ -1,0 +1,620 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+    <meta charset="UTF-8">
+    <title>用户管理 - 糖尿病预测系统</title>
+    <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/css/bootstrap.min.css">
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
+    <link rel="stylesheet" href="css/styles.css">
+    <style>
+        .container {
+            padding-top: 80px;
+        }
+        .table-responsive {
+            overflow-x: auto;
+        }
+        .user-list-card {
+            border-radius: 10px;
+            overflow: hidden;
+            box-shadow: 0 4px 10px rgba(0,0,0,0.1);
+        }
+        .badge-role {
+            font-size: 85%;
+            font-weight: normal;
+        }
+        .actions-column {
+            min-width: 160px;
+        }
+        .user-avatar {
+            width: 40px;
+            height: 40px;
+            border-radius: 50%;
+            object-fit: cover;
+            margin-right: 10px;
+        }
+    </style>
+</head>
+<body>
+    <!-- 统一的管理员导航栏 -->
+    <nav class="navbar navbar-expand-lg navbar-light navbar-custom-light fixed-top">
+        <div class="container-fluid">
+            <a class="navbar-brand" href="admin_dashboard.html">
+                <i class="fas fa-user-shield me-2"></i>糖尿病预测系统 - 管理后台
+            </a>
+            <button class="navbar-toggler" type="button" data-bs-toggle="collapse" data-bs-target="#navbarNav">
+                <span class="navbar-toggler-icon"></span>
+            </button>
+            <div class="collapse navbar-collapse" id="navbarNav">
+                <ul class="navbar-nav me-auto">
+                    <li class="nav-item">
+                        <a class="nav-link" href="admin_dashboard.html"><i class="fas fa-tachometer-alt me-1"></i>管理面板</a>
+                    </li>
+                    <li class="nav-item">
+                        <a class="nav-link active" href="#"><i class="fas fa-users me-1"></i>用户管理</a>
+                    </li>
+                    <li class="nav-item">
+                        <a class="nav-link" href="admin_data_upload.html"><i class="fas fa-database me-1"></i>数据管理</a>
+                    </li>
+                </ul>
+                <div class="d-flex">
+                    <span class="navbar-text me-3" id="adminWelcome"></span>
+                    <button class="btn btn-outline-secondary btn-sm" onclick="logout()">
+                        <i class="fas fa-sign-out-alt me-1"></i>退出登录
+                    </button>
+                </div>
+            </div>
+        </div>
+    </nav>
+
+    <div class="container" id="adminControls">
+        <div class="d-flex justify-content-between align-items-center mb-4">
+            <h2>用户管理</h2>
+            <button class="btn btn-primary" data-bs-toggle="modal" data-bs-target="#addUserModal">
+                <i class="fas fa-user-plus me-1"></i>添加用户
+            </button>
+        </div>
+        
+        <!-- 用户搜索和筛选 -->
+        <div class="card mb-4">
+            <div class="card-body">
+                <div class="row">
+                    <div class="col-md-8">
+                        <div class="input-group">
+                            <span class="input-group-text bg-light">
+                                <i class="fas fa-search"></i>
+                            </span>
+                            <input type="text" class="form-control" id="userSearchInput" placeholder="搜索用户名、邮箱...">
+                            <button class="btn btn-outline-secondary" type="button" id="searchUserBtn">搜索</button>
+                        </div>
+                    </div>
+                    <div class="col-md-4">
+                        <select class="form-select" id="userRoleFilter">
+                            <option value="all">所有角色</option>
+                            <option value="1">普通用户</option>
+                            <option value="2">管理员</option>
+                        </select>
+                    </div>
+                </div>
+            </div>
+        </div>
+        
+        <!-- 用户列表 -->
+        <div class="card user-list-card">
+            <div class="card-header bg-light">
+                <h5 class="mb-0">用户列表</h5>
+            </div>
+            <div class="card-body p-0">
+                <div class="table-responsive">
+                    <table class="table table-hover mb-0" id="usersTable">
+                        <thead class="table-light">
+                            <tr>
+                                <th>用户信息</th>
+                                <th>角色</th>
+                                <th>注册时间</th>
+                                <th>最近登录</th>
+                                <th>健康记录</th>
+                                <th class="actions-column">操作</th>
+                            </tr>
+                        </thead>
+                        <tbody id="usersList">
+                            <tr>
+                                <td colspan="6" class="text-center py-4">
+                                    <div class="spinner-border text-primary" role="status">
+                                        <span class="visually-hidden">加载中...</span>
+                                    </div>
+                                    <p class="mt-2 mb-0">正在加载用户数据...</p>
+                                </td>
+                            </tr>
+                        </tbody>
+                    </table>
+                </div>
+            </div>
+            <div class="card-footer bg-light">
+                <div class="d-flex justify-content-between align-items-center">
+                    <div>
+                        <span id="totalUsersCount">0</span> 个用户
+                    </div>
+                    <nav aria-label="用户分页">
+                        <ul class="pagination pagination-sm mb-0" id="usersPagination">
+                            <li class="page-item disabled">
+                                <a class="page-link" href="#" tabindex="-1">上一页</a>
+                            </li>
+                            <li class="page-item active"><a class="page-link" href="#">1</a></li>
+                            <li class="page-item disabled">
+                                <a class="page-link" href="#">下一页</a>
+                            </li>
+                        </ul>
+                    </nav>
+                </div>
+            </div>
+        </div>
+        
+        <!-- 结果提示区域 -->
+        <div id="result" class="mt-3"></div>
+    </div>
+    
+    <!-- 添加用户模态框 -->
+    <div class="modal fade" id="addUserModal" tabindex="-1">
+        <div class="modal-dialog">
+            <div class="modal-content">
+                <div class="modal-header">
+                    <h5 class="modal-title"><i class="fas fa-user-plus me-2"></i>添加用户</h5>
+                    <button type="button" class="btn-close" data-bs-dismiss="modal" aria-label="Close"></button>
+                </div>
+                <div class="modal-body">
+                    <form id="addUserForm">
+                        <div class="mb-3">
+                            <label for="username" class="form-label">用户名</label>
+                            <input type="text" class="form-control" id="username" required>
+                        </div>
+                        <div class="mb-3">
+                            <label for="email" class="form-label">邮箱</label>
+                            <input type="email" class="form-control" id="email" required>
+                        </div>
+                        <div class="mb-3">
+                            <label for="password" class="form-label">密码</label>
+                            <input type="password" class="form-control" id="password" required>
+                        </div>
+                        <div class="mb-3">
+                            <label for="role_id" class="form-label">角色</label>
+                            <select class="form-select" id="role_id" required>
+                                <option value="1">普通用户</option>
+                                <option value="2">管理员</option>
+                            </select>
+                        </div>
+                    </form>
+                </div>
+                <div class="modal-footer">
+                    <button type="button" class="btn btn-secondary" data-bs-dismiss="modal">取消</button>
+                    <button type="button" class="btn btn-primary" id="saveUserBtn">保存</button>
+                </div>
+            </div>
+        </div>
+    </div>
+    
+    <!-- 编辑用户模态框 -->
+    <div class="modal fade" id="editUserModal" tabindex="-1">
+        <div class="modal-dialog">
+            <div class="modal-content">
+                <div class="modal-header">
+                    <h5 class="modal-title"><i class="fas fa-user-edit me-2"></i>编辑用户</h5>
+                    <button type="button" class="btn-close" data-bs-dismiss="modal" aria-label="Close"></button>
+                </div>
+                <div class="modal-body">
+                    <form id="editUserForm">
+                        <input type="hidden" id="edit_user_id">
+                        <div class="mb-3">
+                            <label for="edit_username" class="form-label">用户名</label>
+                            <input type="text" class="form-control" id="edit_username" required>
+                        </div>
+                        <div class="mb-3">
+                            <label for="edit_email" class="form-label">邮箱</label>
+                            <input type="email" class="form-control" id="edit_email" required>
+                        </div>
+                        <div class="mb-3">
+                            <label for="edit_password" class="form-label">密码（留空表示不修改）</label>
+                            <input type="password" class="form-control" id="edit_password">
+                        </div>
+                        <div class="mb-3">
+                            <label for="edit_role_id" class="form-label">角色</label>
+                            <select class="form-select" id="edit_role_id" required>
+                                <option value="1">普通用户</option>
+                                <option value="2">管理员</option>
+                            </select>
+                        </div>
+                    </form>
+                </div>
+                <div class="modal-footer">
+                    <button type="button" class="btn btn-secondary" data-bs-dismiss="modal">取消</button>
+                    <button type="button" class="btn btn-primary" id="updateUserBtn">更新</button>
+                </div>
+            </div>
+        </div>
+    </div>
+    
+    <!-- 查看用户健康记录模态框 -->
+    <div class="modal fade" id="viewHealthModal" tabindex="-1">
+        <div class="modal-dialog modal-lg">
+            <div class="modal-content">
+                <div class="modal-header">
+                    <h5 class="modal-title"><i class="fas fa-heartbeat me-2"></i>用户健康记录</h5>
+                    <button type="button" class="btn-close" data-bs-dismiss="modal" aria-label="Close"></button>
+                </div>
+                <div class="modal-body" id="healthRecordsList">
+                    <div class="text-center py-4">
+                        <div class="spinner-border text-primary" role="status">
+                            <span class="visually-hidden">加载中...</span>
+                        </div>
+                        <p class="mt-2 mb-0">正在加载健康记录...</p>
+                    </div>
+                </div>
+                <div class="modal-footer">
+                    <button type="button" class="btn btn-secondary" data-bs-dismiss="modal">关闭</button>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <script src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/js/bootstrap.bundle.min.js"></script>
+    <script src="app.js"></script>
+    <script>
+        // 当前选中的用户ID
+        let currentUserId = null;
+        
+        // 页面加载完成后检查登录状态和权限
+        document.addEventListener('DOMContentLoaded', function() {
+            const auth = checkAdminAuth();
+            if (!auth) return;
+            
+            // 显示管理员名
+            document.getElementById('adminWelcome').textContent = `欢迎管理员, ${auth.currentUser.username}`;
+            
+            // 获取用户列表
+            getUsers(auth.token);
+            
+            // 注册事件
+            document.getElementById('saveUserBtn').addEventListener('click', function() {
+                addUser(auth.token);
+            });
+            
+            document.getElementById('updateUserBtn').addEventListener('click', function() {
+                updateUser(auth.token);
+            });
+            
+            // 搜索和筛选功能
+            document.getElementById('searchUserBtn').addEventListener('click', function() {
+                const searchTerm = document.getElementById('userSearchInput').value;
+                const roleFilter = document.getElementById('userRoleFilter').value;
+                searchUsers(auth.token, searchTerm, roleFilter);
+            });
+            
+            document.getElementById('userRoleFilter').addEventListener('change', function() {
+                const searchTerm = document.getElementById('userSearchInput').value;
+                const roleFilter = this.value;
+                searchUsers(auth.token, searchTerm, roleFilter);
+            });
+        });
+        
+        // 获取所有用户
+        async function getUsers(token) {
+            try {
+                // 示例数据，实际应从API获取
+                // const users = await apiRequest('/admin/users', 'GET', null, token);
+                const users = [
+                    { id: 1, username: '张三', email: 'zhang@example.com', role_id: 1, created_at: '2023-10-01T10:15:30', last_login: '2023-10-18T08:45:22', health_records_count: 5 },
+                    { id: 2, username: '李四', email: 'li@example.com', role_id: 1, created_at: '2023-10-02T14:22:10', last_login: '2023-10-17T16:30:45', health_records_count: 3 },
+                    { id: 3, username: '王五', email: 'wang@example.com', role_id: 1, created_at: '2023-10-05T09:10:15', last_login: '2023-10-15T11:20:33', health_records_count: 2 },
+                    { id: 4, username: '管理员', email: 'admin@example.com', role_id: 2, created_at: '2023-09-15T08:00:00', last_login: '2023-10-18T09:00:15', health_records_count: 0 }
+                ];
+                
+                if (users.length === 0) {
+                    document.getElementById('usersList').innerHTML = `
+                        <tr>
+                            <td colspan="6" class="text-center">暂无用户数据</td>
+                        </tr>
+                    `;
+                    document.getElementById('totalUsersCount').textContent = 0;
+                    return;
+                }
+                
+                // 更新用户数量显示
+                document.getElementById('totalUsersCount').textContent = users.length;
+                
+                // 构建用户列表
+                const usersTableHtml = users.map(user => `
+                    <tr>
+                        <td>
+                            <div class="d-flex align-items-center">
+                                <img src="images/user-avatar.jpg" alt="${user.username}" class="user-avatar">
+                                <div>
+                                    <div>${user.username}</div>
+                                    <div class="text-muted small">${user.email}</div>
+                                </div>
+                            </div>
+                        </td>
+                        <td>
+                            <span class="badge ${user.role_id === 2 ? 'bg-danger' : 'bg-primary'} badge-role">
+                                ${user.role_id === 2 ? '管理员' : '普通用户'}
+                            </span>
+                        </td>
+                        <td>${new Date(user.created_at).toLocaleString()}</td>
+                        <td>${user.last_login ? new Date(user.last_login).toLocaleString() : '从未登录'}</td>
+                        <td>
+                            ${user.health_records_count > 0 ? 
+                                `<span class="badge bg-success">${user.health_records_count} 条记录</span>` : 
+                                '<span class="badge bg-secondary">无记录</span>'}
+                        </td>
+                        <td class="actions-column">
+                            <div class="btn-group btn-group-sm">
+                                <button class="btn btn-outline-primary" onclick="showEditUserModal(${user.id})">
+                                    <i class="fas fa-edit"></i>
+                                </button>
+                                <button class="btn btn-outline-info" onclick="viewUserHealth(${user.id})" ${user.health_records_count === 0 ? 'disabled' : ''}>
+                                    <i class="fas fa-heartbeat"></i>
+                                </button>
+                                <button class="btn btn-outline-danger" onclick="deleteUser(${user.id})">
+                                    <i class="fas fa-trash-alt"></i>
+                                </button>
+                            </div>
+                        </td>
+                    </tr>
+                `).join('');
+                
+                document.getElementById('usersList').innerHTML = usersTableHtml;
+            } catch (error) {
+                console.error('获取用户列表失败:', error);
+                showMessage(`获取用户列表失败: ${error.message}`, 'error');
+                document.getElementById('usersList').innerHTML = `
+                    <tr>
+                        <td colspan="6" class="text-center text-danger">
+                            <i class="fas fa-exclamation-circle me-2"></i>加载用户数据失败，请刷新重试
+                        </td>
+                    </tr>
+                `;
+            }
+        }
+        
+        // 搜索用户
+        async function searchUsers(token, searchTerm, roleFilter) {
+            try {
+                // 示例：这里应该调用后端API进行搜索
+                // const params = { search: searchTerm, role_id: roleFilter !== 'all' ? roleFilter : null };
+                // const users = await apiRequest('/admin/users/search', 'GET', params, token);
+                
+                document.getElementById('usersList').innerHTML = `
+                    <tr>
+                        <td colspan="6" class="text-center py-4">
+                            <div class="spinner-border text-primary" role="status">
+                                <span class="visually-hidden">搜索中...</span>
+                            </div>
+                            <p class="mt-2 mb-0">正在搜索用户数据...</p>
+                        </td>
+                    </tr>
+                `;
+                
+                // 模拟搜索延迟
+                setTimeout(() => {
+                    // 重新获取所有用户（实际应显示搜索结果）
+                    getUsers(token);
+                }, 800);
+            } catch (error) {
+                console.error('搜索用户失败:', error);
+                showMessage(`搜索用户失败: ${error.message}`, 'error');
+            }
+        }
+        
+        // 添加用户
+        async function addUser(token) {
+            try {
+                const username = document.getElementById('username').value.trim();
+                const email = document.getElementById('email').value.trim();
+                const password = document.getElementById('password').value;
+                const role_id = document.getElementById('role_id').value;
+                
+                if (!username || !email || !password) {
+                    showMessage('请填写所有必填字段', 'error');
+                    return;
+                }
+                
+                const data = { username, email, password, role_id: parseInt(role_id) };
+                
+                // 实际应调用API创建用户
+                // await apiRequest('/admin/users', 'POST', data, token);
+                
+                // 模拟创建成功
+                showMessage('用户创建成功!', 'success');
+                
+                // 关闭模态框
+                const modal = bootstrap.Modal.getInstance(document.getElementById('addUserModal'));
+                modal.hide();
+                
+                // 重置表单
+                document.getElementById('addUserForm').reset();
+                
+                // 刷新用户列表
+                getUsers(token);
+            } catch (error) {
+                console.error('添加用户失败:', error);
+                showMessage(`添加用户失败: ${error.message}`, 'error');
+            }
+        }
+        
+        // 打开编辑用户模态框
+        function showEditUserModal(userId) {
+            currentUserId = userId;
+            
+            // 实际应通过API获取用户信息
+            // apiRequest(`/admin/users/${userId}`, 'GET', null, token)
+            //   .then(user => { ... });
+            
+            // 示例数据
+            const user = {
+                id: userId,
+                username: userId === 1 ? '张三' : userId === 2 ? '李四' : userId === 3 ? '王五' : '管理员',
+                email: userId === 1 ? 'zhang@example.com' : userId === 2 ? 'li@example.com' : userId === 3 ? 'wang@example.com' : 'admin@example.com',
+                role_id: userId === 4 ? 2 : 1
+            };
+            
+            // 填充表单
+            document.getElementById('edit_user_id').value = user.id;
+            document.getElementById('edit_username').value = user.username;
+            document.getElementById('edit_email').value = user.email;
+            document.getElementById('edit_password').value = '';
+            document.getElementById('edit_role_id').value = user.role_id;
+            
+            // 显示模态框
+            const editModal = new bootstrap.Modal(document.getElementById('editUserModal'));
+            editModal.show();
+        }
+        
+        // 更新用户
+        async function updateUser(token) {
+            try {
+                const user_id = document.getElementById('edit_user_id').value;
+                const username = document.getElementById('edit_username').value.trim();
+                const email = document.getElementById('edit_email').value.trim();
+                const password = document.getElementById('edit_password').value;
+                const role_id = document.getElementById('edit_role_id').value;
+                
+                if (!username || !email) {
+                    showMessage('用户名和邮箱不能为空', 'error');
+                    return;
+                }
+                
+                const data = { 
+                    username, 
+                    email, 
+                    role_id: parseInt(role_id)
+                };
+                
+                // 仅当密码不为空时才更新密码
+                if (password) {
+                    data.password = password;
+                }
+                
+                // 实际应调用API更新用户
+                // await apiRequest(`/admin/users/${user_id}`, 'PUT', data, token);
+                
+                // 模拟更新成功
+                showMessage('用户信息更新成功!', 'success');
+                
+                // 关闭模态框
+                const modal = bootstrap.Modal.getInstance(document.getElementById('editUserModal'));
+                modal.hide();
+                
+                // 刷新用户列表
+                getUsers(token);
+            } catch (error) {
+                console.error('更新用户失败:', error);
+                showMessage(`更新用户失败: ${error.message}`, 'error');
+            }
+        }
+        
+        // 删除用户
+        async function deleteUser(userId) {
+            if (!confirm('确定要删除此用户吗？此操作不可恢复。')) {
+                return;
+            }
+            
+            try {
+                const auth = checkAdminAuth();
+                if (!auth) return;
+                
+                // 实际应调用API删除用户
+                // await apiRequest(`/admin/users/${userId}`, 'DELETE', null, auth.token);
+                
+                // 模拟删除成功
+                showMessage('用户删除成功!', 'success');
+                
+                // 刷新用户列表
+                getUsers(auth.token);
+            } catch (error) {
+                console.error('删除用户失败:', error);
+                showMessage(`删除用户失败: ${error.message}`, 'error');
+            }
+        }
+        
+        // 查看用户健康记录
+        async function viewUserHealth(userId) {
+            const auth = checkAdminAuth();
+            if (!auth) return;
+            
+            currentUserId = userId;
+            
+            // 显示模态框
+            const healthModal = new bootstrap.Modal(document.getElementById('viewHealthModal'));
+            healthModal.show();
+            
+            // 显示加载中状态
+            document.getElementById('healthRecordsList').innerHTML = `
+                <div class="text-center py-4">
+                    <div class="spinner-border text-primary" role="status">
+                        <span class="visually-hidden">加载中...</span>
+                    </div>
+                    <p class="mt-2 mb-0">正在加载健康记录...</p>
+                </div>
+            `;
+            
+            try {
+                // 实际应调用API获取用户健康记录
+                // const records = await apiRequest(`/admin/users/${userId}/health_records`, 'GET', null, auth.token);
+                
+                // 示例数据
+                const records = [
+                    { id: 101, created_at: '2023-10-12T09:30:00', glucose: 95, bmi: 24.5, insulin: 130, age: 45, probability: 0.35 },
+                    { id: 102, created_at: '2023-10-14T10:15:00', glucose: 105, bmi: 24.8, insulin: 135, age: 45, probability: 0.42 },
+                    { id: 103, created_at: '2023-10-17T14:20:00', glucose: 90, bmi: 24.6, insulin: 125, age: 45, probability: 0.30 }
+                ];
+                
+                if (records.length === 0) {
+                    document.getElementById('healthRecordsList').innerHTML = `
+                        <div class="alert alert-info">该用户暂无健康记录</div>
+                    `;
+                    return;
+                }
+                
+                // 构建健康记录表格
+                const healthRecordsHtml = `
+                    <div class="table-responsive">
+                        <table class="table table-hover">
+                            <thead>
+                                <tr>
+                                    <th>记录时间</th>
+                                    <th>血糖</th>
+                                    <th>BMI</th>
+                                    <th>胰岛素</th>
+                                    <th>风险评估</th>
+                                </tr>
+                            </thead>
+                            <tbody>
+                                ${records.map(record => `
+                                    <tr>
+                                        <td>${new Date(record.created_at).toLocaleString()}</td>
+                                        <td>${record.glucose} mg/dL</td>
+                                        <td>${record.bmi}</td>
+                                        <td>${record.insulin} μU/mL</td>
+                                        <td>
+                                            <span class="badge ${record.probability > 0.5 ? 'bg-danger' : 'bg-success'}">
+                                                ${Math.round(record.probability * 100)}%
+                                            </span>
+                                        </td>
+                                    </tr>
+                                `).join('')}
+                            </tbody>
+                        </table>
+                    </div>
+                `;
+                
+                document.getElementById('healthRecordsList').innerHTML = healthRecordsHtml;
+            } catch (error) {
+                console.error('获取健康记录失败:', error);
+                document.getElementById('healthRecordsList').innerHTML = `
+                    <div class="alert alert-danger">
+                        <i class="fas fa-exclamation-circle me-2"></i>获取健康记录失败: ${error.message}
+                    </div>
+                `;
+            }
+        }
+    </script>
+</body>
+</html> 

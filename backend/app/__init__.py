@@ -1,4 +1,4 @@
-from flask import Flask,request
+from flask import Flask, request, jsonify
 from flask_sqlalchemy import SQLAlchemy
 from flask_cors import CORS
 from config import Config
@@ -16,7 +16,17 @@ def create_app(config_class=Config):
     jwt.init_app(app)   # 初始化JWT
 
     # 配置CORS，允许所有来源的请求
-    CORS(app, resources={r"/*": {"origins": "*"}})
+    CORS(app, resources={r"/*": {
+        "origins": "*",
+        "methods": ["GET", "POST", "PUT", "DELETE", "OPTIONS"],
+        "allow_headers": ["Content-Type", "Authorization", "Access-Control-Allow-Credentials"]
+    }})
+    
+    # 添加一个通用路由处理OPTIONS请求
+    @app.route('/', defaults={'path': ''}, methods=['OPTIONS'])
+    @app.route('/<path:path>', methods=['OPTIONS'])
+    def options_handler(path):
+        return jsonify({}), 200
 
     # 注册蓝图
     from app.routes.auth import auth_bp  

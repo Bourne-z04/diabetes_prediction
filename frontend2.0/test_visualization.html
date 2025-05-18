@@ -1,0 +1,94 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+    <meta charset="UTF-8">
+    <title>糖尿病数据集可视化测试</title>
+    <script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
+    <style>
+        .container { width: 90%; margin: 0 auto; }
+        .chart-container { margin-top: 20px; height: 400px; }
+        .controls { margin: 20px 0; }
+        select, button { padding: 5px; margin-right: 10px; }
+    </style>
+</head>
+<body>
+    <div class="container">
+        <h1>糖尿病数据集可视化</h1>
+        
+        <div class="controls">
+            <label>选择要可视化的列：</label>
+            <select id="columnSelect" multiple>
+                <option value="Pregnancies">怀孕次数</option>
+                <option value="Glucose">葡萄糖</option>
+                <option value="BloodPressure">血压</option>
+                <option value="SkinThickness">皮肤厚度</option>
+                <option value="Insulin">胰岛素</option>
+                <option value="BMI">BMI指数</option>
+                <option value="DiabetesPedigreeFunction">糖尿病谱系功能</option>
+                <option value="Age">年龄</option>
+                <option value="Outcome">结果</option>
+            </select>
+            <button id="loadData">加载数据</button>
+            <select id="chartType">
+                <option value="line">折线图</option>
+                <option value="bar">柱状图</option>
+                <option value="scatter">散点图</option>
+            </select>
+        </div>
+        
+        <div class="chart-container">
+            <canvas id="dataChart"></canvas>
+        </div>
+    </div>
+
+    <script>
+        document.getElementById('loadData').addEventListener('click', async function() {
+            const selectedColumns = Array.from(document.getElementById('columnSelect').selectedOptions)
+                .map(option => option.value);
+            
+            if (selectedColumns.length === 0) {
+                alert('请至少选择一列数据');
+                return;
+            }
+
+            try {
+                const controller = new AbortController();
+                const timeoutId = setTimeout(() => controller.abort(), 5000);
+                
+                const response = await fetch('http://localhost:5000/visualize', {
+                    method: 'POST',
+                    mode: 'cors',
+                    headers: {
+                        'Content-Type': 'application/json',
+                        'Accept': 'application/json'
+                    },
+                    body: JSON.stringify({
+                        columns: selectedColumns
+                    }),
+                    signal: controller.signal
+                });
+                
+                clearTimeout(timeoutId);
+                
+                const contentType = response.headers.get('content-type');
+                if (!contentType || !contentType.includes('application/json')) {
+                    const text = await response.text();
+                    throw new Error(`Expected JSON but got: ${text.substring(0, 100)}`);
+                }
+                
+                const data = await response.json();
+                if (response.ok) {
+                    alert(`成功获取数据，共 ${data.data.count} 条记录`);
+                    console.log('获取的数据:', data.data);
+                } else {
+                    alert('数据加载失败: ' + data.error);
+                }
+            } catch (error) {
+                console.error('请求详情:', error);
+                alert('请求失败: ' + error.message);
+            }
+        });
+
+    </script>
+</body>
+</html>

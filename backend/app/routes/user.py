@@ -3,10 +3,59 @@ from flask_jwt_extended import jwt_required, get_jwt_identity
 from app import db
 from app.models.user_health_info import UserHealthInfo
 from app.models.health_info import HealthInfo
+from app.models.feedback import Feedback
 from app.train.predict import predict_single  # 新增导入
+import requests
+import os
 
 user_bp = Blueprint('user_bp', __name__)
 
+# 从环境变量或配置中获取DeepSeek API密钥
+DEEPSEEK_API_KEY = os.environ.get('DEEPSEEK_API_KEY', 'sk-817c497b1f8e45b69c63b79b054d985a')
+DEEPSEEK_API_URL = 'https://api.deepseek.com/chat/completions'
+
+# 新增AI聊天代理接口
+@user_bp.route('/ai_chat', methods=['POST'])
+@jwt_required()
+def ai_chat_proxy():
+    try:
+        data = request.get_json()
+        
+        if not data or not data.get('prompt'):
+            return jsonify({'error': '请求内容不能为空'}), 400
+            
+        # 准备发送给DeepSeek API的数据
+        api_request_body = {
+            "model": "deepseek-chat",
+            "messages": [
+                {"role": "system", "content": "You are a helpful assistant specialized in diabetes health management."},
+                {"role": "user", "content": data.get('prompt')}
+            ],
+            "stream": False
+        }
+        
+        # 调用DeepSeek API
+        response = requests.post(
+            DEEPSEEK_API_URL,
+            headers={
+                'Content-Type': 'application/json',
+                'Authorization': f'Bearer {DEEPSEEK_API_KEY}'
+            },
+            json=api_request_body
+        )
+        
+        # 检查响应状态
+        if response.status_code != 200:
+            return jsonify({
+                'error': f'AI服务请求失败: {response.status_code}',
+                'details': response.text
+            }), 500
+            
+        # 返回AI响应
+        return jsonify(response.json()), 200
+        
+    except Exception as e:
+        return jsonify({'error': f'AI聊天请求错误: {str(e)}'}), 500
 
 # 用户保存健康信息
 @user_bp.route('/saveinfo', methods=['GET', 'POST'])
@@ -127,4 +176,115 @@ def submit_feedback():
         
     except Exception as e:
         db.session.rollback()
+        return jsonify({'error': str(e)}), 500
+
+# 用户获取所有健康记录历史
+@user_bp.route('/health_records', methods=['GET'])
+@jwt_required()
+def get_health_records():
+    try:
+        current_user_id = get_jwt_identity()
+        
+        # 获取用户所有健康信息，按时间降序排序
+        health_infos = HealthInfo.query.filter_by(user_id=current_user_id)\
+            .order_by(HealthInfo.created_at.desc()).all()
+            
+        if not health_infos:
+            return jsonify([]), 200
+            
+        # 为每个健康记录计算预测结果
+        records = []
+        for health_info in health_infos:
+            # 准备预测数据
+            features = [
+                health_info.age,
+                health_info.bmi,
+                health_info.insulin,
+                health_info.skin_thickness,
+                health_info.glucose
+            ]
+            
+            # 调用预测模型获取概率结果
+            prediction_results = predict_single(features)
+            
+            # 计算平均概率
+            probabilities = [result['probability'] for result in prediction_results.values()]
+            avg_probability = sum(probabilities) / len(probabilities)
+            
+            # 构建记录数据
+            record = {
+                'id': health_info.id,
+                'probability': avg_probability,
+                'model_details': prediction_results,
+                'health_info': {
+                    'age': health_info.age,
+                    'bmi': health_info.bmi,
+                    'insulin': health_info.insulin,
+                    'skin_thickness': health_info.skin_thickness,
+                    'glucose': health_info.glucose
+                },
+                'created_at': health_info.created_at.isoformat()
+            }
+            records.append(record)
+        
+        return jsonify(records), 200
+        
+    except Exception as e:
+        return jsonify({'error': str(e)}), 500
+
+# 用户获取特定健康记录的预测结果（支持导出）
+@user_bp.route('/predict/<int:record_id>', methods=['GET'])
+@jwt_required()
+def get_specific_prediction(record_id):
+    try:
+        current_user_id = get_jwt_identity()
+        
+        # 获取特定的健康信息记录
+        health_info = HealthInfo.query.filter_by(id=record_id, user_id=current_user_id).first()
+            
+        if not health_info:
+            return jsonify({'error': '未找到健康信息或无权访问'}), 404
+            
+        # 准备预测数据
+        features = [
+            health_info.age,
+            health_info.bmi,
+            health_info.insulin,
+            health_info.skin_thickness,
+            health_info.glucose
+        ]
+        
+        # 调用预测模型获取概率结果
+        prediction_results = predict_single(features)
+        
+        # 计算平均概率
+        probabilities = [result['probability'] for result in prediction_results.values()]
+        avg_probability = sum(probabilities) / len(probabilities)
+        
+        # 准备响应数据
+        response_data = {
+            'id': health_info.id,
+            'probability': avg_probability,
+            'model_details': prediction_results,
+            'health_info': {
+                'age': health_info.age,
+                'bmi': health_info.bmi,
+                'insulin': health_info.insulin,
+                'skin_thickness': health_info.skin_thickness,
+                'glucose': health_info.glucose,
+                'created_at': health_info.created_at.isoformat()
+            },
+            'export_ready': True
+        }
+        
+        # 检查是否请求导出格式
+        if request.args.get('export') == 'true':
+            response_data['export_format'] = 'full'
+            return jsonify(response_data), 200, {
+                'Content-Disposition': f'attachment; filename=prediction_export_{record_id}_{current_user_id}.json'
+            }
+            
+        return jsonify(response_data), 200
+        
+    except Exception as e:
         return jsonify({'error': str(e)}), 500

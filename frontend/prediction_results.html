@@ -79,7 +79,7 @@
             }
 
             // 获取预测结果
-            fetch('/api/user/predict', {
+            fetch('/user/predict', {
                 headers: {
                     'Authorization': `Bearer ${token}`
                 }
@@ -144,7 +144,7 @@
                 
                 // 导出功能
                 document.getElementById('exportBtn').addEventListener('click', () => {
-                    fetch('/api/user/predict?export=true', {
+                    fetch('/user/predict?export=true', {
                         headers: {
                             'Authorization': `Bearer ${token}`
                         }

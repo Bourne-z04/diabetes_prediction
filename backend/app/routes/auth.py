@@ -6,8 +6,12 @@ from app.models.user import User
 auth_bp = Blueprint('auth_bp', __name__)
 
 # 用户注册
-@auth_bp.route('/register', methods=['POST'])  
+@auth_bp.route('/register', methods=['POST', 'OPTIONS'])  
 def register():
+    if request.method == 'OPTIONS':
+        # 处理预检请求
+        return jsonify({}), 200
+        
     data = request.get_json()
     
     if not data or not data.get('username') or not data.get('email') or not data.get('password'):
@@ -30,8 +34,12 @@ def register():
     return jsonify({'message': '注册成功', 'user': user.to_dict()}), 201
     
 # 用户登录
-@auth_bp.route('/login', methods=['POST'])
+@auth_bp.route('/login', methods=['POST', 'OPTIONS'])
 def login():
+    if request.method == 'OPTIONS':
+        # 处理预检请求
+        return jsonify({}), 200
+        
     data = request.get_json()
     
     if not data or not data.get('email') or not data.get('password'):

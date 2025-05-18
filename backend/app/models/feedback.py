@@ -9,6 +9,9 @@ class Feedback(db.Model):
     content = db.Column(db.Text, nullable=False)
     contact = db.Column(db.String(100))
     created_at = db.Column(db.DateTime, default=datetime.utcnow, nullable=False)
+    status = db.Column(db.String(20), default='pending', nullable=False)  # pending, processing, resolved
+    admin_reply = db.Column(db.Text)
+    reply_time = db.Column(db.DateTime)
     
     def to_dict(self):
         return {
@@ -16,5 +19,8 @@ class Feedback(db.Model):
             'user_id': self.user_id,
             'content': self.content,
             'contact': self.contact,
-            'created_at': self.created_at.isoformat()
+            'created_at': self.created_at.isoformat(),
+            'status': self.status,
+            'admin_reply': self.admin_reply,
+            'reply_time': self.reply_time.isoformat() if self.reply_time else None
         }

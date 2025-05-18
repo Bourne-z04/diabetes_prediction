@@ -19,4 +19,4 @@ def init_admin_user():
 
 if __name__ == '__main__':
     init_admin_user()  # 初始化管理员用户
-    app.run(debug=True)
+    app.run(debug=True, host='0.0.0.0')

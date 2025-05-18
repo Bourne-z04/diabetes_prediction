@@ -1,0 +1,815 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+    <meta charset="UTF-8">
+    <title>管理员控制台 - 糖尿病预测系统</title>
+    <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/css/bootstrap.min.css">
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
+    <link rel="stylesheet" href="css/styles.css">
+    <script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
+    <script src="https://cdn.jsdelivr.net/npm/marked/marked.min.js"></script>
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/highlight.js/11.7.0/styles/github.min.css">
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/highlight.js/11.7.0/highlight.min.js"></script>
+    <style>
+        .stats-card {
+            border-radius: 10px;
+            overflow: hidden;
+            transition: all 0.3s ease;
+            margin-bottom: 20px;
+            box-shadow: 0 4px 10px rgba(0,0,0,0.1);
+        }
+        
+        .stats-card:hover {
+            transform: translateY(-5px);
+            box-shadow: 0 8px 15px rgba(0,0,0,0.15);
+        }
+        
+        .stats-card .card-body {
+            padding: 20px;
+        }
+        
+        .stats-icon {
+            width: 50px;
+            height: 50px;
+            border-radius: 50%;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            font-size: 1.5rem;
+            margin-right: 15px;
+        }
+        
+        .stats-card h3 {
+            font-size: 1.8rem;
+            font-weight: 700;
+            margin-bottom: 5px;
+        }
+        
+        .chart-container {
+            height: 300px;
+            margin-bottom: 20px;
+        }
+        
+        .bg-gradient-primary {
+            background: linear-gradient(135deg, #3498db, #2980b9);
+        }
+        
+        .bg-gradient-success {
+            background: linear-gradient(135deg, #2ecc71, #27ae60);
+        }
+        
+        .bg-gradient-warning {
+            background: linear-gradient(135deg, #f39c12, #e67e22);
+        }
+        
+        .bg-gradient-danger {
+            background: linear-gradient(135deg, #e74c3c, #c0392b);
+        }
+        
+        .container {
+            padding-top: 80px;
+        }
+        
+        #adminTabContent {
+            padding: 25px 0;
+        }
+    </style>
+</head>
+<body>
+    <nav class="navbar navbar-expand-lg navbar-light navbar-custom-light fixed-top">
+        <div class="container-fluid">
+            <a class="navbar-brand" href="#">
+                <i class="fas fa-user-shield me-2"></i>糖尿病预测系统 - 管理后台
+            </a>
+            <button class="navbar-toggler" type="button" data-bs-toggle="collapse" data-bs-target="#navbarNav">
+                <span class="navbar-toggler-icon"></span>
+            </button>
+            <div class="collapse navbar-collapse" id="navbarNav">
+                <ul class="navbar-nav me-auto">
+                    <li class="nav-item">
+                        <a class="nav-link active" href="#"><i class="fas fa-tachometer-alt me-1"></i>管理面板</a>
+                    </li>
+                    <li class="nav-item">
+                        <a class="nav-link" href="admin_users.html"><i class="fas fa-users me-1"></i>用户管理</a>
+                    </li>
+                    <li class="nav-item">
+                        <a class="nav-link" href="admin_data_upload.html"><i class="fas fa-database me-1"></i>数据管理</a>
+                    </li>
+                </ul>
+                <div class="d-flex">
+                    <span class="navbar-text me-3" id="adminWelcome"></span>
+                    <button class="btn btn-outline-secondary btn-sm" onclick="logout()">
+                        <i class="fas fa-sign-out-alt me-1"></i>退出登录
+                    </button>
+                </div>
+            </div>
+        </div>
+    </nav>
+
+    <div class="container" id="adminControls">
+        <!-- 统计卡片 -->
+        <div class="row">
+            <div class="col-md-3">
+                <div class="card stats-card">
+                    <div class="card-body d-flex align-items-center">
+                        <div class="stats-icon bg-gradient-primary text-white">
+                            <i class="fas fa-users"></i>
+                        </div>
+                        <div>
+                            <h3 id="totalUsers">0</h3>
+                            <p class="text-muted mb-0">总用户数</p>
+                        </div>
+                    </div>
+                </div>
+            </div>
+            <div class="col-md-3">
+                <div class="card stats-card">
+                    <div class="card-body d-flex align-items-center">
+                        <div class="stats-icon bg-gradient-success text-white">
+                            <i class="fas fa-file-medical"></i>
+                        </div>
+                        <div>
+                            <h3 id="totalRecords">0</h3>
+                            <p class="text-muted mb-0">健康记录</p>
+                        </div>
+                    </div>
+                </div>
+            </div>
+            <div class="col-md-3">
+                <div class="card stats-card">
+                    <div class="card-body d-flex align-items-center">
+                        <div class="stats-icon bg-gradient-warning text-white">
+                            <i class="fas fa-chart-line"></i>
+                        </div>
+                        <div>
+                            <h3 id="totalPredictions">0</h3>
+                            <p class="text-muted mb-0">预测次数</p>
+                        </div>
+                    </div>
+                </div>
+            </div>
+            <div class="col-md-3">
+                <div class="card stats-card">
+                    <div class="card-body d-flex align-items-center">
+                        <div class="stats-icon bg-gradient-danger text-white">
+                            <i class="fas fa-exclamation-triangle"></i>
+                        </div>
+                        <div>
+                            <h3 id="highRiskUsers">0</h3>
+                            <p class="text-muted mb-0">高风险用户</p>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+
+        <!-- 选项卡导航 -->
+        <ul class="nav nav-tabs mt-4" id="adminTabs" role="tablist">
+            <li class="nav-item" role="presentation">
+                <button class="nav-link active" id="overview-tab" data-bs-toggle="tab" data-bs-target="#overview" type="button">
+                    <i class="fas fa-chart-pie me-2"></i>数据概览
+                </button>
+            </li>
+            <li class="nav-item" role="presentation">
+                <button class="nav-link" id="upload-tab" data-bs-toggle="tab" data-bs-target="#upload" type="button">
+                    <i class="fas fa-upload me-2"></i>数据上传
+                </button>
+            </li>
+            <li class="nav-item" role="presentation">
+                <button class="nav-link" id="visualization-tab" data-bs-toggle="tab" data-bs-target="#visualization" type="button">
+                    <i class="fas fa-chart-bar me-2"></i>数据可视化
+                </button>
+            </li>
+            <li class="nav-item" role="presentation">
+                <button class="nav-link" id="analysis-tab" data-bs-toggle="tab" data-bs-target="#analysis" type="button">
+                    <i class="fas fa-search me-2"></i>数据分析
+                </button>
+            </li>
+        </ul>
+        
+        <!-- 选项卡内容 -->
+        <div class="tab-content" id="adminTabContent">
+            <!-- 数据概览选项卡 -->
+            <div class="tab-pane fade show active" id="overview" role="tabpanel">
+                <div class="row">
+                    <div class="col-lg-8">
+                        <div class="card mb-4">
+                            <div class="card-header d-flex justify-content-between align-items-center">
+                                <h5 class="mb-0">平台使用趋势</h5>
+                                <select class="form-select form-select-sm" style="width: auto;" id="trendTimeRange">
+                                    <option value="7">最近7天</option>
+                                    <option value="30" selected>最近30天</option>
+                                    <option value="90">最近90天</option>
+                                </select>
+                            </div>
+                            <div class="card-body">
+                                <div class="chart-container">
+                                    <canvas id="usageTrendChart"></canvas>
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+                    <div class="col-lg-4">
+                        <div class="card mb-4">
+                            <div class="card-header">
+                                <h5 class="mb-0">用户活跃度</h5>
+                            </div>
+                            <div class="card-body">
+                                <div class="chart-container">
+                                    <canvas id="userActivityChart"></canvas>
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+                
+                <div class="row">
+                    <div class="col-md-6">
+                        <div class="card mb-4">
+                            <div class="card-header">
+                                <h5 class="mb-0">最新注册用户</h5>
+                            </div>
+                            <div class="card-body p-0">
+                                <div class="table-responsive">
+                                    <table class="table table-hover mb-0">
+                                        <thead>
+                                            <tr>
+                                                <th>用户名</th>
+                                                <th>注册时间</th>
+                                                <th>最近登录</th>
+                                            </tr>
+                                        </thead>
+                                        <tbody id="recentUsersList">
+                                            <tr>
+                                                <td colspan="3" class="text-center">加载中...</td>
+                                            </tr>
+                                        </tbody>
+                                    </table>
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+                    <div class="col-md-6">
+                        <div class="card mb-4">
+                            <div class="card-header">
+                                <h5 class="mb-0">最新预测记录</h5>
+                            </div>
+                            <div class="card-body p-0">
+                                <div class="table-responsive">
+                                    <table class="table table-hover mb-0">
+                                        <thead>
+                                            <tr>
+                                                <th>用户</th>
+                                                <th>风险评估</th>
+                                                <th>时间</th>
+                                            </tr>
+                                        </thead>
+                                        <tbody id="recentPredictionsList">
+                                            <tr>
+                                                <td colspan="3" class="text-center">加载中...</td>
+                                            </tr>
+                                        </tbody>
+                                    </table>
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+            </div>
+
+            <!-- 数据上传选项卡 -->
+            <div class="tab-pane fade" id="upload" role="tabpanel">
+                <div class="row">
+                    <div class="col-md-8 mx-auto">
+                        <div class="card">
+                            <div class="card-header">
+                                <h5 class="mb-0"><i class="fas fa-file-upload me-2"></i>上传糖尿病数据集</h5>
+                            </div>
+                            <div class="card-body">
+                                <form id="uploadForm">
+                                    <div class="mb-4">
+                                        <label for="file" class="form-label">选择CSV文件</label>
+                                        <input class="form-control" type="file" id="file" accept=".csv">
+                                        <div class="form-text">
+                                            支持标准CSV格式的糖尿病数据集，文件大小不超过10MB
+                                        </div>
+                                    </div>
+                                    
+                                    <div class="d-grid gap-2 d-md-flex justify-content-md-end">
+                                        <button type="reset" class="btn btn-outline-secondary">
+                                            <i class="fas fa-undo me-1"></i>重置
+                                        </button>
+                                        <button type="button" id="uploadButton" class="btn btn-primary">
+                                            <i class="fas fa-upload me-1"></i>上传文件
+                                        </button>
+                                    </div>
+                                </form>
+                                
+                                <div id="result" class="mt-4"></div>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+            </div>
+
+            <!-- 数据可视化选项卡 -->
+            <div class="tab-pane fade" id="visualization" role="tabpanel">
+                <div class="row mb-4">
+                    <div class="col-md-12">
+                        <div class="card">
+                            <div class="card-header">
+                                <div class="d-flex justify-content-between align-items-center">
+                                    <h5 class="mb-0">数据可视化</h5>
+                                    <div>
+                                        <select class="form-select form-select-sm" id="chartType">
+                                            <option value="distribution">数据分布</option>
+                                            <option value="correlation">相关性分析</option>
+                                            <option value="comparison">数据对比</option>
+                                        </select>
+                                    </div>
+                                </div>
+                            </div>
+                            <div class="card-body">
+                                <div class="chart-container">
+                                    <canvas id="visualizationChart"></canvas>
+                                </div>
+                                <div class="text-center mt-3">
+                                    <button class="btn btn-primary" id="refreshChartBtn">
+                                        <i class="fas fa-sync-alt me-1"></i>刷新图表
+                                    </button>
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+            </div>
+
+            <!-- 数据分析选项卡 -->
+            <div class="tab-pane fade" id="analysis" role="tabpanel">
+                <div class="row mb-4">
+                    <div class="col-md-12">
+                        <div class="card">
+                            <div class="card-header">
+                                <h5 class="mb-0">风险因素分析</h5>
+                            </div>
+                            <div class="card-body">
+                                <div class="chart-container">
+                                    <canvas id="riskFactorsChart"></canvas>
+                                </div>
+                                <div class="text-muted mt-2">
+                                    <small>* 基于当前数据集的分析结果，展示各因素对糖尿病风险的影响程度</small>
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+                
+                <div class="text-center mb-4">
+                    <button id="generateReportBtn" class="btn btn-success">
+                        <i class="fas fa-file-medical me-2"></i>生成分析报告
+                    </button>
+                </div>
+                
+                <div id="healthReportOutput"></div>
+            </div>
+        </div>
+    </div>
+    
+    <!-- 加载遮罩 -->
+    <div id="loadingOverlay" class="position-fixed top-0 start-0 w-100 h-100 d-flex justify-content-center align-items-center" style="display: none; background-color: rgba(255,255,255,0.8); z-index: 1050;">
+        <div class="card shadow p-4" style="width: 300px;">
+            <div class="text-center mb-3">
+                <div class="spinner-border text-primary" role="status">
+                    <span class="visually-hidden">加载中...</span>
+                </div>
+            </div>
+            <h5 class="text-center mb-3">正在生成分析报告</h5>
+            <p class="text-muted text-center mb-3">AI正在深入分析您的数据，请稍候...</p>
+            <div class="progress">
+                <div id="loadingProgress" class="progress-bar progress-bar-striped progress-bar-animated" style="width: 0%"></div>
+            </div>
+        </div>
+    </div>
+
+    <script src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/js/bootstrap.bundle.min.js"></script>
+    <script src="app.js"></script>
+    <script>
+        // 页面加载完成后执行初始化
+        document.addEventListener('DOMContentLoaded', function() {
+            // 使用改进的checkAuth函数检查管理员权限
+            const auth = checkAdminAuth();
+            if (!auth) {
+                // 添加参数防止无限重定向循环
+                window.location.href = 'index.html?noredirect=true';
+                return;
+            }
+            
+            // 显示管理员名称
+            document.getElementById('adminWelcome').textContent = `欢迎管理员, ${auth.currentUser.username}`;
+            
+            // 加载统计数据
+            loadDashboardStats(auth.token);
+            
+            // 绑定上传按钮事件
+            document.getElementById('uploadButton').addEventListener('click', function() {
+                handleFileUpload();
+            });
+            
+            // 绑定图表类型选择事件
+            document.getElementById('chartType').addEventListener('change', function() {
+                updateVisualizationChart(this.value);
+            });
+            
+            // 绑定刷新图表按钮事件
+            document.getElementById('refreshChartBtn').addEventListener('click', function() {
+                const chartType = document.getElementById('chartType').value;
+                updateVisualizationChart(chartType);
+            });
+            
+            // 绑定趋势时间范围选择事件
+            document.getElementById('trendTimeRange').addEventListener('change', function() {
+                updateUsageTrendChart(this.value);
+            });
+            
+            // 绑定生成报告按钮事件
+            document.getElementById('generateReportBtn').addEventListener('click', function() {
+                generateHealthReport();
+            });
+            
+            // 初始化所有图表
+            initializeDashboardCharts();
+        });
+        
+        // 加载控制面板统计数据
+        async function loadDashboardStats(token) {
+            try {
+                // 示例数据，实际应从API获取
+                // const stats = await apiRequest('/admin/dashboard/stats', 'GET', null, token);
+                const stats = {
+                    total_users: 256,
+                    total_records: 1458,
+                    total_predictions: 872,
+                    high_risk_users: 68
+                };
+                
+                // 更新统计卡片
+                document.getElementById('totalUsers').textContent = stats.total_users;
+                document.getElementById('totalRecords').textContent = stats.total_records;
+                document.getElementById('totalPredictions').textContent = stats.total_predictions;
+                document.getElementById('highRiskUsers').textContent = stats.high_risk_users;
+                
+                // 加载最新用户和预测记录
+                loadRecentUsers(token);
+                loadRecentPredictions(token);
+            } catch (error) {
+                console.error('加载统计数据失败:', error);
+            }
+        }
+        
+        // 加载最新用户
+        async function loadRecentUsers(token) {
+            try {
+                // 示例数据，实际应从API获取
+                // const users = await apiRequest('/admin/users/recent', 'GET', null, token);
+                const users = [
+                    { username: '张三', created_at: '2023-10-15T08:30:21', last_login: '2023-10-18T14:22:15' },
+                    { username: '李四', created_at: '2023-10-14T10:15:33', last_login: '2023-10-17T09:45:20' },
+                    { username: '王五', created_at: '2023-10-13T15:42:18', last_login: '2023-10-16T16:30:45' },
+                    { username: '赵六', created_at: '2023-10-12T11:25:09', last_login: '2023-10-15T10:18:32' }
+                ];
+                
+                if (!users || users.length === 0) {
+                    document.getElementById('recentUsersList').innerHTML = 
+                        '<tr><td colspan="3" class="text-center">暂无用户数据</td></tr>';
+                    return;
+                }
+                
+                // 构建用户列表HTML
+                const usersHtml = users.map(user => `
+                    <tr>
+                        <td>${user.username}</td>
+                        <td>${new Date(user.created_at).toLocaleString()}</td>
+                        <td>${user.last_login ? new Date(user.last_login).toLocaleString() : '从未登录'}</td>
+                    </tr>
+                `).join('');
+                
+                document.getElementById('recentUsersList').innerHTML = usersHtml;
+            } catch (error) {
+                console.error('加载最新用户失败:', error);
+                document.getElementById('recentUsersList').innerHTML = 
+                    '<tr><td colspan="3" class="text-center">加载失败</td></tr>';
+            }
+        }
+        
+        // 加载最新预测记录
+        async function loadRecentPredictions(token) {
+            try {
+                // 示例数据，实际应从API获取
+                // const predictions = await apiRequest('/admin/predictions/recent', 'GET', null, token);
+                const predictions = [
+                    { username: '张三', probability: 0.78, created_at: '2023-10-18T09:15:33' },
+                    { username: '李四', probability: 0.42, created_at: '2023-10-17T14:30:21' },
+                    { username: '王五', probability: 0.65, created_at: '2023-10-16T11:45:09' },
+                    { username: '赵六', probability: 0.31, created_at: '2023-10-15T16:22:48' }
+                ];
+                
+                if (!predictions || predictions.length === 0) {
+                    document.getElementById('recentPredictionsList').innerHTML = 
+                        '<tr><td colspan="3" class="text-center">暂无预测数据</td></tr>';
+                    return;
+                }
+                
+                // 构建预测记录列表HTML
+                const predictionsHtml = predictions.map(prediction => `
+                    <tr>
+                        <td>${prediction.username}</td>
+                        <td>
+                            <span class="badge ${prediction.probability > 0.5 ? 'bg-danger' : 'bg-success'}">
+                                ${Math.round(prediction.probability * 100)}%
+                            </span>
+                        </td>
+                        <td>${new Date(prediction.created_at).toLocaleString()}</td>
+                    </tr>
+                `).join('');
+                
+                document.getElementById('recentPredictionsList').innerHTML = predictionsHtml;
+            } catch (error) {
+                console.error('加载最新预测记录失败:', error);
+                document.getElementById('recentPredictionsList').innerHTML = 
+                    '<tr><td colspan="3" class="text-center">加载失败</td></tr>';
+            }
+        }
+        
+        // 初始化所有图表
+        function initializeDashboardCharts() {
+            initializeUsageTrendChart('30');  // 默认显示30天
+            initializeUserActivityChart();
+            updateVisualizationChart('distribution');  // 默认显示分布图
+            initializeRiskFactorsChart();
+        }
+        
+        // 初始化平台使用趋势图表
+        function initializeUsageTrendChart(days) {
+            const ctx = document.getElementById('usageTrendChart').getContext('2d');
+            
+            // 根据选择的天数生成标签
+            const labels = [];
+            const now = new Date();
+            for (let i = days - 1; i >= 0; i--) {
+                const date = new Date(now);
+                date.setDate(date.getDate() - i);
+                labels.push(`${date.getMonth() + 1}/${date.getDate()}`);
+            }
+            
+            // 示例数据
+            const loginData = Array.from({length: days}, () => Math.floor(Math.random() * 50) + 10);
+            const predictionData = Array.from({length: days}, () => Math.floor(Math.random() * 40) + 5);
+            
+            if (window.usageTrendChartInstance) {
+                window.usageTrendChartInstance.destroy();
+            }
+            
+            window.usageTrendChartInstance = new Chart(ctx, {
+                type: 'line',
+                data: {
+                    labels: labels,
+                    datasets: [
+                        {
+                            label: '登录次数',
+                            data: loginData,
+                            borderColor: '#3498db',
+                            backgroundColor: 'rgba(52, 152, 219, 0.1)',
+                            tension: 0.3,
+                            fill: true
+                        },
+                        {
+                            label: '预测次数',
+                            data: predictionData,
+                            borderColor: '#2ecc71',
+                            backgroundColor: 'rgba(46, 204, 113, 0.1)',
+                            tension: 0.3,
+                            fill: true
+                        }
+                    ]
+                },
+                options: {
+                    responsive: true,
+                    maintainAspectRatio: false,
+                    plugins: {
+                        title: {
+                            display: true,
+                            text: `最近${days}天平台使用趋势`
+                        }
+                    },
+                    scales: {
+                        y: {
+                            beginAtZero: true
+                        }
+                    }
+                }
+            });
+        }
+        
+        // 更新平台使用趋势图表
+        function updateUsageTrendChart(days) {
+            initializeUsageTrendChart(days);
+        }
+        
+        // 初始化用户活跃度图表
+        function initializeUserActivityChart() {
+            const ctx = document.getElementById('userActivityChart').getContext('2d');
+            
+            // 示例数据
+            new Chart(ctx, {
+                type: 'doughnut',
+                data: {
+                    labels: ['活跃用户', '一般用户', '不活跃用户'],
+                    datasets: [{
+                        data: [62, 25, 13],
+                        backgroundColor: [
+                            'rgba(46, 204, 113, 0.8)',
+                            'rgba(52, 152, 219, 0.8)',
+                            'rgba(149, 165, 166, 0.8)'
+                        ],
+                        borderColor: [
+                            'rgba(46, 204, 113, 1)',
+                            'rgba(52, 152, 219, 1)',
+                            'rgba(149, 165, 166, 1)'
+                        ],
+                        borderWidth: 1
+                    }]
+                },
+                options: {
+                    responsive: true,
+                    maintainAspectRatio: false,
+                    plugins: {
+                        legend: {
+                            position: 'bottom'
+                        }
+                    }
+                }
+            });
+        }
+        
+        // 更新数据可视化图表
+        function updateVisualizationChart(type) {
+            const ctx = document.getElementById('visualizationChart').getContext('2d');
+            
+            // 清除旧图表
+            if (window.visualizationChartInstance) {
+                window.visualizationChartInstance.destroy();
+            }
+            
+            let config = {};
+            
+            // 根据图表类型设置配置
+            switch(type) {
+                case 'distribution':
+                    config = {
+                        type: 'bar',
+                        data: {
+                            labels: ['血糖', 'BMI', '年龄', '胰岛素水平', '皮肤厚度'],
+                            datasets: [{
+                                label: '数据分布',
+                                data: [85, 65, 75, 40, 55],
+                                backgroundColor: [
+                                    'rgba(52, 152, 219, 0.8)',
+                                    'rgba(46, 204, 113, 0.8)',
+                                    'rgba(155, 89, 182, 0.8)',
+                                    'rgba(241, 196, 15, 0.8)',
+                                    'rgba(231, 76, 60, 0.8)'
+                                ]
+                            }]
+                        },
+                        options: {
+                            responsive: true,
+                            maintainAspectRatio: false,
+                            plugins: {
+                                title: {
+                                    display: true,
+                                    text: '数据特征分布'
+                                }
+                            }
+                        }
+                    };
+                    break;
+                
+                case 'correlation':
+                    config = {
+                        type: 'radar',
+                        data: {
+                            labels: ['血糖', 'BMI', '年龄', '胰岛素水平', '皮肤厚度'],
+                            datasets: [{
+                                label: '相关性强度',
+                                data: [0.85, 0.65, 0.55, 0.70, 0.40],
+                                backgroundColor: 'rgba(52, 152, 219, 0.2)',
+                                borderColor: 'rgba(52, 152, 219, 1)',
+                                pointBackgroundColor: 'rgba(52, 152, 219, 1)'
+                            }]
+                        },
+                        options: {
+                            responsive: true,
+                            maintainAspectRatio: false,
+                            scales: {
+                                r: {
+                                    min: 0,
+                                    max: 1
+                                }
+                            },
+                            plugins: {
+                                title: {
+                                    display: true,
+                                    text: '特征相关性分析'
+                                }
+                            }
+                        }
+                    };
+                    break;
+                
+                case 'comparison':
+                    config = {
+                        type: 'line',
+                        data: {
+                            labels: ['特征1', '特征2', '特征3', '特征4', '特征5', '特征6'],
+                            datasets: [
+                                {
+                                    label: '患病组',
+                                    data: [120, 85, 65, 45, 75, 90],
+                                    borderColor: 'rgba(231, 76, 60, 1)',
+                                    backgroundColor: 'rgba(231, 76, 60, 0.1)',
+                                    fill: true
+                                },
+                                {
+                                    label: '健康组',
+                                    data: [80, 60, 45, 30, 55, 65],
+                                    borderColor: 'rgba(46, 204, 113, 1)',
+                                    backgroundColor: 'rgba(46, 204, 113, 0.1)',
+                                    fill: true
+                                }
+                            ]
+                        },
+                        options: {
+                            responsive: true,
+                            maintainAspectRatio: false,
+                            plugins: {
+                                title: {
+                                    display: true,
+                                    text: '患病组与健康组数据对比'
+                                }
+                            }
+                        }
+                    };
+                    break;
+            }
+            
+            // 创建新图表
+            window.visualizationChartInstance = new Chart(ctx, config);
+        }
+        
+        // 初始化风险因素图表
+        function initializeRiskFactorsChart() {
+            const ctx = document.getElementById('riskFactorsChart').getContext('2d');
+            
+            // 风险因素数据
+            new Chart(ctx, {
+                type: 'bar',
+                data: {
+                    labels: ['血糖水平', 'BMI指数', '胰岛素水平', '年龄', '皮肤厚度'],
+                    datasets: [{
+                        label: '风险影响因子',
+                        data: [0.85, 0.70, 0.62, 0.58, 0.45],
+                        backgroundColor: [
+                            'rgba(231, 76, 60, 0.7)',
+                            'rgba(241, 196, 15, 0.7)',
+                            'rgba(52, 152, 219, 0.7)',
+                            'rgba(46, 204, 113, 0.7)',
+                            'rgba(155, 89, 182, 0.7)'
+                        ]
+                    }]
+                },
+                options: {
+                    indexAxis: 'y',  // 水平条形图
+                    responsive: true,
+                    maintainAspectRatio: false,
+                    scales: {
+                        x: {
+                            beginAtZero: true,
+                            max: 1,
+                            title: {
+                                display: true,
+                                text: '影响程度'
+                            }
+                        }
+                    },
+                    plugins: {
+                        title: {
+                            display: true,
+                            text: '糖尿病风险因素影响分析'
+                        }
+                    }
+                }
+            });
+        }
+    </script>
+</body>
+</html> 

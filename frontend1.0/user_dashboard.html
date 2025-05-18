@@ -1,0 +1,411 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+    <meta charset="UTF-8">
+    <title>糖尿病预测系统 - 用户中心</title>
+    <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/css/bootstrap.min.css">
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.0.0-beta3/css/all.min.css">
+    <link rel="stylesheet" href="css/styles.css">
+    <style>
+        .container { 
+            padding-top: 80px; /* 增加顶部内边距，避免导航栏遮挡 */
+            margin-bottom: 50px; /* 增加底部内边距 */
+            position: relative; /* 相对定位 */
+            z-index: 1; /* 确保内容在背景模糊层之上 */
+        }
+        .card { 
+            margin-bottom: 20px; 
+            box-shadow: 0 4px 15px rgba(0,0,0,0.1); 
+            background-color: rgba(255, 255, 255, 0.9); /* 轻微半透明效果 */
+        }
+        .form-label { font-weight: 500; }
+        .btn-primary { background-color: #007bff; }
+        .btn-success { background-color: #28a745; }
+        .high-risk { color: #dc3545; font-weight: bold; }
+        .low-risk { color: #28a745; font-weight: bold; }
+        #result { margin: 15px 0; padding: 10px; border-radius: 4px; }
+        .success { background-color: #d4edda; color: #155724; }
+        .error { background-color: #f8d7da; color: #721c24; }
+    </style>
+</head>
+<body>
+    <nav class="navbar navbar-expand-lg navbar-light navbar-custom-light fixed-top">
+        <div class="container-fluid">
+            <a class="navbar-brand" href="#"><i class="fas fa-heartbeat me-2"></i>糖尿病预测系统</a>
+            <button class="navbar-toggler" type="button" data-bs-toggle="collapse" data-bs-target="#navbarNav">
+                <span class="navbar-toggler-icon"></span>
+            </button>
+            <div class="collapse navbar-collapse" id="navbarNav">
+                <ul class="navbar-nav me-auto">
+                    <li class="nav-item">
+                        <a class="nav-link active" href="#"><i class="fas fa-file-medical-alt me-1"></i>健康信息</a>
+                    </li>
+                    <li class="nav-item">
+                        <a class="nav-link" href="user_history.html"><i class="fas fa-history me-1"></i>历史记录</a>
+                    </li>
+                    <li class="nav-item">
+                        <a class="nav-link" href="health_plan.html"><i class="fas fa-notes-medical me-1"></i>健康方案</a>
+                    </li>
+                    <li class="nav-item">
+                        <a class="nav-link" href="#" id="openAiChatModal" data-bs-toggle="modal" data-bs-target="#aiChatModal">
+                            <i class="fas fa-robot me-1"></i>AI 助手
+                        </a>
+                    </li>
+                    <li class="nav-item">
+                        <a class="nav-link" href="#" id="openFeedbackModal" data-bs-toggle="modal" data-bs-target="#feedbackModal"><i class="fas fa-comment-dots me-1"></i>提交反馈</a>
+                    </li>
+                    <li class="nav-item">
+                        <a class="nav-link" href="user_profile.html"><i class="fas fa-user-cog me-1"></i>个人资料</a>
+                    </li>
+                </ul>
+                <div class="d-flex align-items-center">
+                    <img src="images/logo.jpg" alt="Logo" class="me-2" style="width: 30px; height: 30px; border-radius: 50%; object-fit: cover;">
+                    <span class="navbar-text me-3" id="userWelcome"></span>
+                    <button class="btn btn-outline-secondary btn-sm" onclick="logout()"><i class="fas fa-sign-out-alt me-1"></i>退出登录</button>
+                </div>
+            </div>
+        </div>
+    </nav>
+
+    <div class="container">
+        <div class="row">
+            <!-- 健康信息表单 -->
+            <div class="col-md-6">
+                <div class="card">
+                    <div class="card-header bg-primary text-white">
+                        <h5 class="mb-0">提交健康信息</h5>
+                    </div>
+                    <div class="card-body">
+                        <form id="healthForm">
+                            <div class="mb-3">
+                                <label for="age" class="form-label">年龄</label>
+                                <input type="number" class="form-control" id="age" placeholder="18-120岁" required>
+                            </div>
+                            <div class="mb-3">
+                                <label for="bmi" class="form-label">BMI指数</label>
+                                <input type="number" step="0.1" class="form-control" id="bmi" placeholder="16.0-45.0 kg/m²" required>
+                            </div>
+                            <div class="mb-3">
+                                <label for="insulin" class="form-label">胰岛素水平</label>
+                                <input type="number" step="0.1" class="form-control" id="insulin" placeholder="0-300 μU/ml" required>
+                            </div>
+                            <div class="mb-3">
+                                <label for="skin_thickness" class="form-label">皮肤厚度</label>
+                                <input type="number" class="form-control" id="skin_thickness" placeholder="10-60 mm" required>
+                            </div>
+                            <div class="mb-3">
+                                <label for="glucose" class="form-label">葡萄糖水平</label>
+                                <input type="number" class="form-control" id="glucose" placeholder="70-200 mg/dl" required>
+                            </div>
+                            <button type="submit" class="btn btn-primary">提交并获取预测结果</button>
+                        </form>
+                        <div id="result"></div>
+                    </div>
+                </div>
+            </div>
+
+            <!-- 预测结果区域 -->
+            <div class="col-md-6">
+                <div class="card">
+                    <div class="card-header bg-success text-white">
+                        <h5 class="mb-0">预测结果</h5>
+                    </div>
+                    <div class="card-body">
+                        <div id="predictionResult">
+                            <p>请先提交您的健康信息以获取预测结果。</p>
+                        </div>
+                        <div id="chartContainer" style="display: none;">
+                            <h5 class="mt-3">模型详情</h5>
+                            <canvas id="modelChart"></canvas>
+                        </div>
+                        <button id="exportBtn" class="btn btn-success mt-3" style="display: none;">导出预测结果</button>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <!-- 用户反馈模态框 -->
+    <div class="modal fade" id="feedbackModal" tabindex="-1" aria-labelledby="feedbackModalLabel" aria-hidden="true">
+        <div class="modal-dialog">
+            <div class="modal-content">
+                <div class="modal-header">
+                    <h5 class="modal-title" id="feedbackModalLabel">提交反馈</h5>
+                    <button type="button" class="btn-close" data-bs-dismiss="modal" aria-label="Close"></button>
+                </div>
+                <div class="modal-body">
+                    <form id="feedbackForm">
+                        <div class="mb-3">
+                            <label for="feedbackContent" class="form-label">反馈内容</label>
+                            <textarea class="form-control" id="feedbackContent" rows="5" placeholder="请详细描述您的使用体验、建议或遇到的问题（10-500字）..." required></textarea>
+                        </div>
+                        <div class="mb-3">
+                            <label for="contactInfo" class="form-label">联系方式（选填）</label>
+                            <input type="text" class="form-control" id="contactInfo" placeholder="电话/邮箱/微信，方便我们与您联系">
+                        </div>
+                    </form>
+                </div>
+                <div class="modal-footer">
+                    <button type="button" class="btn btn-secondary" data-bs-dismiss="modal">取消</button>
+                    <button type="button" class="btn btn-primary" id="submitFeedback">提交</button>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <!-- AI 聊天模态框 -->
+    <div class="modal fade" id="aiChatModal" tabindex="-1" aria-labelledby="aiChatModalLabel" aria-hidden="true">
+        <div class="modal-dialog modal-lg">
+            <div class="modal-content">
+                <div class="modal-header">
+                    <h5 class="modal-title" id="aiChatModalLabel"><i class="fas fa-robot"></i> AI 助手</h5>
+                    <button type="button" class="btn-close" data-bs-dismiss="modal" aria-label="Close"></button>
+                </div>
+                <div class="modal-body">
+                    <div id="aiChatBox" style="height: 300px; overflow-y: auto; border: 1px solid #ccc; padding: 10px; margin-bottom: 10px; border-radius: 5px; background-color: #f9f9f9;">
+                        <!-- 聊天内容将显示在这里 -->
+                        <div class="text-muted text-center">你好！我是您的 AI 助手，有什么可以帮助您的吗？</div>
+                    </div>
+                    <div class="input-group">
+                        <input type="text" class="form-control" id="aiPromptInput" placeholder="请输入您的问题...">
+                        <button class="btn btn-primary" type="button" id="sendAiPrompt">
+                            <i class="fas fa-paper-plane"></i> 发送
+                        </button>
+                    </div>
+                    <div id="aiCharError" class="text-danger mt-2"></div>
+                </div>
+                <div class="modal-footer">
+                    <button type="button" class="btn btn-secondary" data-bs-dismiss="modal">关闭</button>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <script src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/js/bootstrap.bundle.min.js"></script>
+    <script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
+    <script src="app.js"></script>
+    <script>
+        document.addEventListener('DOMContentLoaded', function() {
+            // 使用改进的checkAuth函数检查用户是否登录
+            const auth = checkAuth();
+            if (!auth) {
+                // 添加参数防止无限重定向循环
+                window.location.href = 'index.html?noredirect=true';
+                return;
+            }
+            
+            // 检查是否为普通用户
+            if (auth.currentUser.role_id === 2) {
+                // 如果是管理员，重定向到管理员页面
+                window.location.href = 'admin_dashboard.html';
+                return;
+            }
+            
+            // 显示用户名
+            document.getElementById('userWelcome').textContent = `欢迎, ${auth.currentUser.username}`;
+            
+            // 提交健康信息表单
+            document.getElementById('healthForm').addEventListener('submit', async function(e) {
+                e.preventDefault();
+                await submitHealthInfo(auth.token);
+            });
+            
+            // 导出按钮事件
+            document.getElementById('exportBtn').addEventListener('click', function() {
+                exportPrediction(auth.token);
+            });
+            
+            // 反馈提交事件
+            document.getElementById('submitFeedback').addEventListener('click', function() {
+                submitFeedback(auth.token);
+            });
+
+            // AI 聊天发送按钮事件
+            const sendAiPromptButton = document.getElementById('sendAiPrompt');
+            if (sendAiPromptButton) {
+                sendAiPromptButton.addEventListener('click', function() {
+                    sendAiQuery(auth.token);
+                });
+            }
+
+            // AI 聊天输入框回车事件
+            const aiPromptInput = document.getElementById('aiPromptInput');
+            if (aiPromptInput) {
+                aiPromptInput.addEventListener('keypress', function(e) {
+                    if (e.key === 'Enter') {
+                        e.preventDefault(); // 防止表单提交（如果是在form内）
+                        sendAiQuery(auth.token);
+                    }
+                });
+            }
+            
+            // 清除AI聊天框欢迎语和错误信息(当模态框打开时)
+            const aiChatModal = document.getElementById('aiChatModal');
+            if (aiChatModal) {
+                aiChatModal.addEventListener('show.bs.modal', function () {
+                    const chatBox = document.getElementById('aiChatBox');
+                    // 保留初始欢迎语，如果聊天记录为空
+                    if (chatBox.children.length === 1 && chatBox.firstElementChild.classList.contains('text-muted')) {
+                        //  可以保留或者改为新的欢迎语，或者清空由用户第一次输入触发交互
+                    } else if (chatBox.children.length > 1) {
+                         // 如果已经有聊天记录，不清空
+                    } else {
+                        // chatBox.innerHTML = '<div class="text-muted text-center">你好！我是您的 AI 助手，有什么可以帮助您的吗？</div>'; // 可选：重置欢迎语
+                    }
+                    const errorMessageDiv = document.getElementById('aiCharError');
+                    if(errorMessageDiv) errorMessageDiv.textContent = '';
+                    const promptIn = document.getElementById('aiPromptInput');
+                    if(promptIn) promptIn.focus(); // 打开模态框时聚焦输入框
+                });
+            }
+        });
+        
+        // 提交健康信息
+        async function submitHealthInfo(token) {
+            const data = {
+                age: document.getElementById('age').value,
+                bmi: document.getElementById('bmi').value,
+                insulin: document.getElementById('insulin').value,
+                skin_thickness: document.getElementById('skin_thickness').value,
+                glucose: document.getElementById('glucose').value
+            };
+            
+            try {
+                const result = await apiRequest('/user/saveinfo', 'POST', data, token);
+                showMessage('健康信息保存成功！');
+                
+                // 保存成功后获取预测结果
+                getPrediction(token);
+            } catch (error) {
+                showMessage(`保存失败: ${error.message}`, 'error');
+            }
+        }
+        
+        // 获取预测结果
+        async function getPrediction(token) {
+            try {
+                const data = await apiRequest('/user/predict', 'POST', null, token);
+                displayPrediction(data);
+            } catch (error) {
+                showMessage(`获取预测结果失败: ${error.message}`, 'error');
+            }
+        }
+        
+        // 显示预测结果
+        function displayPrediction(data) {
+            const resultElement = document.getElementById('predictionResult');
+            const probability = (data.probability * 100).toFixed(1);
+            const riskClass = data.probability > 0.5 ? 'high-risk' : 'low-risk';
+            const riskLevel = data.probability > 0.5 ? '高风险' : '低风险';
+            
+            resultElement.innerHTML = `
+                <h4>总体风险: <span class="${riskClass}">${probability}%</span></h4>
+                <p>根据您的健康数据，您患糖尿病的风险为 <span class="${riskClass}">${riskLevel}</span></p>
+                <h5>您的健康数据:</h5>
+                <ul class="list-group">
+                    <li class="list-group-item">年龄: ${data.health_info.age}</li>
+                    <li class="list-group-item">BMI指数: ${data.health_info.bmi}</li>
+                    <li class="list-group-item">胰岛素水平: ${data.health_info.insulin}</li>
+                    <li class="list-group-item">皮肤厚度: ${data.health_info.skin_thickness}</li>
+                    <li class="list-group-item">葡萄糖水平: ${data.health_info.glucose}</li>
+                    <li class="list-group-item">检测时间: ${new Date(data.health_info.created_at).toLocaleString()}</li>
+                </ul>
+            `;
+            
+            // 显示图表
+            document.getElementById('chartContainer').style.display = 'block';
+            document.getElementById('exportBtn').style.display = 'block';
+            
+            // 绘制模型详情图表
+            const ctx = document.getElementById('modelChart').getContext('2d');
+            const modelData = Object.entries(data.model_details).map(([name, detail]) => ({
+                model: name,
+                probability: detail.probability
+            }));
+            
+            new Chart(ctx, {
+                type: 'bar',
+                data: {
+                    labels: modelData.map(item => item.model),
+                    datasets: [{
+                        label: '预测概率',
+                        data: modelData.map(item => item.probability * 100),
+                        backgroundColor: 'rgba(54, 162, 235, 0.5)',
+                        borderColor: 'rgba(54, 162, 235, 1)',
+                        borderWidth: 1
+                    }]
+                },
+                options: {
+                    scales: {
+                        y: {
+                            beginAtZero: true,
+                            max: 100,
+                            title: {
+                                display: true,
+                                text: '概率(%)'
+                            }
+                        }
+                    }
+                }
+            });
+        }
+        
+        // 导出预测结果
+        async function exportPrediction(token) {
+            try {
+                const response = await fetch(`${API_BASE}/user/predict?export=true`, {
+                    headers: { 'Authorization': `Bearer ${token}` }
+                });
+                
+                if (!response.ok) {
+                    throw new Error('导出失败');
+                }
+                
+                const blob = await response.blob();
+                const url = window.URL.createObjectURL(blob);
+                const a = document.createElement('a');
+                a.href = url;
+                a.download = `diabetes_prediction_${new Date().toISOString().split('T')[0]}.json`;
+                document.body.appendChild(a);
+                a.click();
+                document.body.removeChild(a);
+                window.URL.revokeObjectURL(url);
+                
+                showMessage('预测结果导出成功');
+            } catch (error) {
+                showMessage(`导出失败: ${error.message}`, 'error');
+            }
+        }
+        
+        // 提交用户反馈
+        async function submitFeedback(token) {
+            const content = document.getElementById('feedbackContent').value;
+            const contact = document.getElementById('contactInfo').value;
+            
+            if (!content) {
+                showMessage('反馈内容不能为空', 'error');
+                return;
+            }
+            
+            try {
+                const result = await apiRequest('/user/feedback', 'POST', {
+                    content,
+                    contact
+                }, token);
+                
+                // 关闭模态框
+                const modal = bootstrap.Modal.getInstance(document.getElementById('feedbackModal'));
+                modal.hide();
+                
+                // 清空表单
+                document.getElementById('feedbackContent').value = '';
+                document.getElementById('contactInfo').value = '';
+                
+                showMessage('感谢您的反馈！我们会尽快处理', 'success');
+            } catch (error) {
+                showMessage(`提交反馈失败: ${error.message}`, 'error');
+            }
+        }
+    </script>
+</body>
+</html> 

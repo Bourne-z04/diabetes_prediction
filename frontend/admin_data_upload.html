@@ -1,0 +1,631 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+    <meta charset="UTF-8">
+    <title>数据管理 - 糖尿病预测系统</title>
+    <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/css/bootstrap.min.css">
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
+    <link rel="stylesheet" href="css/styles.css">
+    <script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
+    <script src="https://cdn.jsdelivr.net/npm/marked/marked.min.js"></script>
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/highlight.js/11.7.0/styles/github.min.css">
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/highlight.js/11.7.0/highlight.min.js"></script>
+    <style>
+        .container {
+            padding-top: 80px;
+        }
+        .chart-container {
+            height: 400px;
+            margin-bottom: 20px;
+        }
+        .card {
+            border-radius: 10px;
+            overflow: hidden;
+            box-shadow: 0 4px 10px rgba(0,0,0,0.1);
+            margin-bottom: 20px;
+            transition: all 0.3s ease;
+        }
+        .card:hover {
+            transform: translateY(-5px);
+            box-shadow: 0 8px 15px rgba(0,0,0,0.15);
+        }
+        .feature-icon {
+            width: 50px;
+            height: 50px;
+            border-radius: 50%;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            font-size: 1.5rem;
+            margin-right: 15px;
+        }
+        .bg-gradient-primary {
+            background: linear-gradient(135deg, #3498db, #2980b9);
+        }
+        .bg-gradient-success {
+            background: linear-gradient(135deg, #2ecc71, #27ae60);
+        }
+        .bg-gradient-warning {
+            background: linear-gradient(135deg, #f39c12, #e67e22);
+        }
+        .bg-gradient-danger {
+            background: linear-gradient(135deg, #e74c3c, #c0392b);
+        }
+    </style>
+</head>
+<body>
+    <!-- 统一的管理员导航栏 -->
+    <nav class="navbar navbar-expand-lg navbar-light navbar-custom-light fixed-top">
+        <div class="container-fluid">
+            <a class="navbar-brand" href="admin_dashboard.html">
+                <i class="fas fa-user-shield me-2"></i>糖尿病预测系统 - 管理后台
+            </a>
+            <button class="navbar-toggler" type="button" data-bs-toggle="collapse" data-bs-target="#navbarNav">
+                <span class="navbar-toggler-icon"></span>
+            </button>
+            <div class="collapse navbar-collapse" id="navbarNav">
+                <ul class="navbar-nav me-auto">
+                    <li class="nav-item">
+                        <a class="nav-link" href="admin_dashboard.html"><i class="fas fa-tachometer-alt me-1"></i>管理面板</a>
+                    </li>
+                    <li class="nav-item">
+                        <a class="nav-link" href="admin_users.html"><i class="fas fa-users me-1"></i>用户管理</a>
+                    </li>
+                    <li class="nav-item">
+                        <a class="nav-link active" href="#"><i class="fas fa-database me-1"></i>数据管理</a>
+                    </li>
+                </ul>
+                <div class="d-flex">
+                    <span class="navbar-text me-3" id="adminWelcome"></span>
+                    <button class="btn btn-outline-secondary btn-sm" onclick="logout()">
+                        <i class="fas fa-sign-out-alt me-1"></i>退出登录
+                    </button>
+                </div>
+            </div>
+        </div>
+    </nav>
+
+    <div class="container" id="adminControls">
+        <div class="d-flex justify-content-between align-items-center mb-4">
+            <h2>数据管理</h2>
+            <div>
+                <button class="btn btn-outline-primary me-2">
+                    <i class="fas fa-history me-1"></i>数据历史
+                </button>
+                <button class="btn btn-primary">
+                    <i class="fas fa-cog me-1"></i>数据配置
+                </button>
+            </div>
+        </div>
+        
+        <!-- 功能卡片 -->
+        <div class="row mb-4">
+            <div class="col-md-3">
+                <div class="card h-100">
+                    <div class="card-body d-flex align-items-center">
+                        <div class="feature-icon bg-gradient-primary text-white">
+                            <i class="fas fa-upload"></i>
+                        </div>
+                        <div>
+                            <h5 class="mb-1">数据上传</h5>
+                            <p class="text-muted mb-0">上传数据文件</p>
+                        </div>
+                    </div>
+                </div>
+            </div>
+            <div class="col-md-3">
+                <div class="card h-100">
+                    <div class="card-body d-flex align-items-center">
+                        <div class="feature-icon bg-gradient-success text-white">
+                            <i class="fas fa-chart-bar"></i>
+                        </div>
+                        <div>
+                            <h5 class="mb-1">数据可视化</h5>
+                            <p class="text-muted mb-0">生成图表分析</p>
+                        </div>
+                    </div>
+                </div>
+            </div>
+            <div class="col-md-3">
+                <div class="card h-100">
+                    <div class="card-body d-flex align-items-center">
+                        <div class="feature-icon bg-gradient-warning text-white">
+                            <i class="fas fa-file-export"></i>
+                        </div>
+                        <div>
+                            <h5 class="mb-1">数据导出</h5>
+                            <p class="text-muted mb-0">导出分析报告</p>
+                        </div>
+                    </div>
+                </div>
+            </div>
+            <div class="col-md-3">
+                <div class="card h-100">
+                    <div class="card-body d-flex align-items-center">
+                        <div class="feature-icon bg-gradient-danger text-white">
+                            <i class="fas fa-broom"></i>
+                        </div>
+                        <div>
+                            <h5 class="mb-1">数据清洗</h5>
+                            <p class="text-muted mb-0">处理异常数据</p>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+        
+        <!-- 文件上传区域 -->
+        <div class="card">
+            <div class="card-header">
+                <h5 class="mb-0"><i class="fas fa-upload me-2"></i>数据文件上传</h5>
+            </div>
+            <div class="card-body">
+                <div class="row">
+                    <div class="col-md-7">
+                        <form id="fileUploadForm" enctype="multipart/form-data">
+                            <div class="mb-3">
+                                <label for="file" class="form-label">上传数据集文件</label>
+                                <input type="file" class="form-control" id="file" accept=".csv">
+                                <div class="form-text">支持CSV格式，大小不超过10MB</div>
+                            </div>
+                            <div class="mb-3">
+                                <label class="form-label">数据集描述</label>
+                                <textarea class="form-control" rows="3" placeholder="描述数据集的来源和内容..."></textarea>
+                            </div>
+                            <div class="mb-3">
+                                <div class="form-check">
+                                    <input class="form-check-input" type="checkbox" id="overwriteCheck">
+                                    <label class="form-check-label" for="overwriteCheck">
+                                        覆盖已有相同名称的数据集
+                                    </label>
+                                </div>
+                            </div>
+                            <div class="d-flex justify-content-end">
+                                <button type="reset" class="btn btn-outline-secondary me-2">
+                                    <i class="fas fa-undo me-1"></i>重置
+                                </button>
+                                <button type="button" class="btn btn-primary" id="uploadButton">
+                                    <i class="fas fa-upload me-1"></i>上传文件
+                                </button>
+                            </div>
+                        </form>
+                    </div>
+                    <div class="col-md-5">
+                        <div class="alert alert-info">
+                            <h6><i class="fas fa-info-circle me-2"></i>数据集说明</h6>
+                            <ul class="mb-0">
+                                <li>文件应包含标准的特征列名</li>
+                                <li>支持处理缺失值（建议先预处理）</li>
+                                <li>数据将在导入后进行标准化处理</li>
+                                <li>上传成功后可立即用于分析和可视化</li>
+                            </ul>
+                        </div>
+                        <div class="mt-3">
+                            <h6>上传历史</h6>
+                            <div class="table-responsive">
+                                <table class="table table-sm">
+                                    <thead class="table-light">
+                                        <tr>
+                                            <th>文件名</th>
+                                            <th>上传时间</th>
+                                            <th>记录数</th>
+                                        </tr>
+                                    </thead>
+                                    <tbody>
+                                        <tr>
+                                            <td>diabetes_data.csv</td>
+                                            <td>2023-10-15</td>
+                                            <td>768</td>
+                                        </tr>
+                                        <tr>
+                                            <td>patient_records.csv</td>
+                                            <td>2023-10-10</td>
+                                            <td>445</td>
+                                        </tr>
+                                    </tbody>
+                                </table>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+                
+                <div id="result" class="mt-4"></div>
+            </div>
+        </div>
+        
+        <!-- 数据可视化区域 -->
+        <div class="card">
+            <div class="card-header">
+                <h5 class="mb-0"><i class="fas fa-chart-bar me-2"></i>数据可视化</h5>
+            </div>
+            <div class="card-body">
+                <div class="row mb-3">
+                    <div class="col-md-3">
+                        <label for="datasetSelector" class="form-label">选择数据集</label>
+                        <select id="datasetSelector" class="form-select">
+                            <option value="diabetes_data">糖尿病主数据集</option>
+                            <option value="patient_records">患者记录数据集</option>
+                        </select>
+                    </div>
+                    <div class="col-md-3">
+                        <label for="chartSelector" class="form-label">图表类型</label>
+                        <select id="chartSelector" class="form-select">
+                            <option value="distribution">数据分布图</option>
+                            <option value="correlation">相关性分析图</option>
+                            <option value="comparison">群组对比图</option>
+                        </select>
+                    </div>
+                    <div class="col-md-6 d-flex align-items-end">
+                        <button class="btn btn-primary" id="refreshChartBtn">
+                            <i class="fas fa-sync-alt me-1"></i>生成图表
+                        </button>
+                    </div>
+                </div>
+                
+                <div class="chart-container">
+                    <canvas id="diabetesChart"></canvas>
+                </div>
+                
+                <div class="row mt-3">
+                    <div class="col-md-12">
+                        <div class="card">
+                            <div class="card-header bg-light">
+                                <h6 class="mb-0">图表分析</h6>
+                            </div>
+                            <div class="card-body">
+                                <p>此图表显示了糖尿病数据集中各关键特征的分布情况。从图表中可以观察到血糖水平和BMI指数对糖尿病风险的影响较为显著，而其他特征如胰岛素水平和皮肤厚度的影响程度较低。建议医护人员特别关注患者的血糖和BMI指标，及早进行干预。</p>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+        
+        <!-- 数据分析报告 -->
+        <div class="card">
+            <div class="card-header">
+                <h5 class="mb-0"><i class="fas fa-file-medical-alt me-2"></i>数据分析报告</h5>
+            </div>
+            <div class="card-body">
+                <p>点击下方按钮生成基于当前数据集的详细分析报告：</p>
+                <button id="generateReportBtn" class="btn btn-success mb-4">
+                    <i class="fas fa-file-medical me-2"></i>生成健康分析报告
+                </button>
+                
+                <div id="healthReportOutput"></div>
+            </div>
+        </div>
+    </div>
+    
+    <!-- 加载遮罩 -->
+    <div id="loadingOverlay" class="position-fixed top-0 start-0 w-100 h-100 d-flex justify-content-center align-items-center" style="display: none; background-color: rgba(255,255,255,0.8); z-index: 1050;">
+        <div class="card shadow p-4" style="width: 300px;">
+            <div class="text-center mb-3">
+                <div class="spinner-border text-primary" role="status">
+                    <span class="visually-hidden">加载中...</span>
+                </div>
+            </div>
+            <h5 class="text-center mb-3">正在生成分析报告</h5>
+            <p class="text-muted text-center mb-3">AI正在深入分析您的数据，请稍候...</p>
+            <div class="progress">
+                <div id="loadingProgress" class="progress-bar progress-bar-striped progress-bar-animated" style="width: 0%"></div>
+            </div>
+        </div>
+    </div>
+
+    <script src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/js/bootstrap.bundle.min.js"></script>
+    <script src="app.js"></script>
+    <script>
+        // 页面加载完成后执行初始化
+        document.addEventListener('DOMContentLoaded', function() {
+            // 检查管理员权限
+            const auth = checkAdminAuth();
+            if (!auth) return; // 没有权限会自动重定向
+            
+            // 显示管理员名称
+            document.getElementById('adminWelcome').textContent = `欢迎管理员, ${auth.currentUser.username}`;
+            
+            // 绑定上传按钮事件
+            document.getElementById('uploadButton').addEventListener('click', function() {
+                handleFileUpload();
+            });
+            
+            // 绑定刷新图表按钮事件
+            document.getElementById('refreshChartBtn').addEventListener('click', function() {
+                const chartType = document.getElementById('chartSelector').value;
+                const dataset = document.getElementById('datasetSelector').value;
+                refreshVisualizationChart(chartType, dataset);
+            });
+            
+            // 绑定生成报告按钮事件
+            document.getElementById('generateReportBtn').addEventListener('click', function() {
+                generateHealthReport();
+            });
+            
+            // 初始化图表显示
+            initializeChart('distribution', 'diabetes_data');
+        });
+        
+        // 处理文件上传
+        function handleFileUpload() {
+            // 检查文件是否已选择
+            const fileInput = document.getElementById('file');
+            if (!fileInput.files.length) {
+                showMessage('请先选择文件', 'error');
+                return;
+            }
+            
+            const file = fileInput.files[0];
+            
+            // 显示上传中状态
+            const resultElement = document.getElementById('result');
+            resultElement.innerHTML = `
+                <div class="alert alert-info">
+                    <div class="d-flex align-items-center">
+                        <div class="spinner-border spinner-border-sm me-2" role="status">
+                            <span class="visually-hidden">上传中...</span>
+                        </div>
+                        <div>正在上传数据文件，请稍候...</div>
+                    </div>
+                </div>
+            `;
+            
+            // 检查文件大小
+            if (file.size > 10 * 1024 * 1024) {
+                resultElement.innerHTML = `
+                    <div class="alert alert-danger">
+                        <i class="fas fa-exclamation-circle me-2"></i>
+                        文件大小超过10MB限制，请选择较小的文件
+                    </div>
+                `;
+                return;
+            }
+            
+            // 模拟上传过程
+            setTimeout(() => {
+                const auth = checkAdminAuth();
+                if (!auth) return;
+                
+                // 实际应该调用后端API上传文件
+                // const formData = new FormData();
+                // formData.append('file', file);
+                // fetch(`${API_BASE}/admin/upload`, {
+                //     method: 'POST',
+                //     body: formData,
+                //     headers: {
+                //         'Authorization': `Bearer ${auth.token}`
+                //     }
+                // })
+                
+                // 模拟上传成功
+                resultElement.innerHTML = `
+                    <div class="alert alert-success">
+                        <i class="fas fa-check-circle me-2"></i>
+                        <strong>文件上传成功！</strong>
+                        <div class="mt-2">
+                            <p class="mb-1">文件名: ${file.name}</p>
+                            <p class="mb-0">导入行数: 768</p>
+                        </div>
+                    </div>
+                `;
+                
+                // 刷新上传历史（实际应从后端获取）
+                updateUploadHistory();
+            }, 1500);
+        }
+        
+        // 更新上传历史
+        function updateUploadHistory() {
+            // 此处应从后端API获取最新的上传历史
+            // 这里仅作示例
+        }
+        
+        // 初始化图表
+        function initializeChart(chartType, dataset) {
+            const ctx = document.getElementById('diabetesChart').getContext('2d');
+            
+            // 清除旧图表
+            if (window.currentChart) {
+                window.currentChart.destroy();
+            }
+            
+            // 根据选择的图表类型和数据集创建不同的图表
+            let chartConfig;
+            
+            switch(chartType) {
+                case 'distribution':
+                    chartConfig = {
+                        type: 'bar',
+                        data: {
+                            labels: ['血糖', 'BMI', '年龄', '胰岛素水平', '皮肤厚度'],
+                            datasets: [{
+                                label: '糖尿病患者',
+                                data: [120, 28, 45, 130, 25],
+                                backgroundColor: 'rgba(231, 76, 60, 0.7)'
+                            }, {
+                                label: '健康人群',
+                                data: [90, 22, 42, 100, 20],
+                                backgroundColor: 'rgba(46, 204, 113, 0.7)'
+                            }]
+                        },
+                        options: {
+                            responsive: true,
+                            maintainAspectRatio: false,
+                            plugins: {
+                                title: {
+                                    display: true,
+                                    text: '糖尿病与健康人群指标对比'
+                                }
+                            }
+                        }
+                    };
+                    break;
+                    
+                case 'correlation':
+                    chartConfig = {
+                        type: 'radar',
+                        data: {
+                            labels: ['血糖', 'BMI', '年龄', '胰岛素水平', '皮肤厚度'],
+                            datasets: [{
+                                label: '相关系数',
+                                data: [0.85, 0.65, 0.45, 0.55, 0.35],
+                                backgroundColor: 'rgba(52, 152, 219, 0.2)',
+                                borderColor: 'rgba(52, 152, 219, 1)',
+                                pointBackgroundColor: 'rgba(52, 152, 219, 1)'
+                            }]
+                        },
+                        options: {
+                            responsive: true,
+                            maintainAspectRatio: false,
+                            scales: {
+                                r: {
+                                    min: 0,
+                                    max: 1
+                                }
+                            },
+                            plugins: {
+                                title: {
+                                    display: true,
+                                    text: '糖尿病风险因素相关性分析'
+                                }
+                            }
+                        }
+                    };
+                    break;
+                    
+                case 'comparison':
+                    chartConfig = {
+                        type: 'line',
+                        data: {
+                            labels: ['20-30岁', '30-40岁', '40-50岁', '50-60岁', '60-70岁', '70岁以上'],
+                            datasets: [{
+                                label: '男性患病率',
+                                data: [0.05, 0.12, 0.22, 0.35, 0.42, 0.48],
+                                borderColor: 'rgba(52, 152, 219, 1)',
+                                backgroundColor: 'rgba(52, 152, 219, 0.1)',
+                                fill: true
+                            }, {
+                                label: '女性患病率',
+                                data: [0.06, 0.15, 0.25, 0.38, 0.45, 0.52],
+                                borderColor: 'rgba(231, 76, 60, 1)',
+                                backgroundColor: 'rgba(231, 76, 60, 0.1)',
+                                fill: true
+                            }]
+                        },
+                        options: {
+                            responsive: true,
+                            maintainAspectRatio: false,
+                            plugins: {
+                                title: {
+                                    display: true,
+                                    text: '不同年龄段糖尿病患病率对比'
+                                }
+                            }
+                        }
+                    };
+                    break;
+            }
+            
+            // 创建图表
+            window.currentChart = new Chart(ctx, chartConfig);
+        }
+        
+        // 刷新可视化图表
+        function refreshVisualizationChart(chartType, dataset) {
+            // 显示加载中状态
+            const chartContainer = document.querySelector('.chart-container');
+            chartContainer.innerHTML = `
+                <div class="d-flex justify-content-center align-items-center" style="height: 300px;">
+                    <div class="text-center">
+                        <div class="spinner-border text-primary mb-3" role="status">
+                            <span class="visually-hidden">加载中...</span>
+                        </div>
+                        <p>正在生成图表...</p>
+                    </div>
+                </div>
+            `;
+            
+            // 模拟加载延迟，实际应从后端获取数据
+            setTimeout(() => {
+                chartContainer.innerHTML = '<canvas id="diabetesChart"></canvas>';
+                initializeChart(chartType, dataset);
+            }, 800);
+        }
+        
+        // 生成健康报告
+        function generateHealthReport() {
+            const loadingOverlay = document.getElementById('loadingOverlay');
+            const loadingProgress = document.getElementById('loadingProgress');
+            
+            // 显示加载遮罩
+            loadingOverlay.style.display = 'flex';
+            
+            // 模拟进度
+            let progress = 0;
+            const progressInterval = setInterval(() => {
+                progress += 5;
+                if (progress > 100) {
+                    clearInterval(progressInterval);
+                    return;
+                }
+                loadingProgress.style.width = `${progress}%`;
+            }, 200);
+            
+            // 模拟报告生成
+            setTimeout(() => {
+                clearInterval(progressInterval);
+                loadingProgress.style.width = '100%';
+                
+                setTimeout(() => {
+                    loadingOverlay.style.display = 'none';
+                    
+                    // 显示生成的报告
+                    const reportOutput = document.getElementById('healthReportOutput');
+                    reportOutput.innerHTML = `
+                        <div class="card">
+                            <div class="card-header">
+                                <h5 class="mb-0">糖尿病数据分析报告</h5>
+                            </div>
+                            <div class="card-body">
+                                <h6>主要发现</h6>
+                                <ul>
+                                    <li>血糖水平是最重要的糖尿病风险指标（相关系数 0.85）</li>
+                                    <li>BMI指数超过26的人群糖尿病风险显著增高</li>
+                                    <li>年龄因素在40岁以上人群中影响更为明显</li>
+                                    <li>女性患病率略高于男性，特别是在50岁以上年龄段</li>
+                                </ul>
+                                
+                                <h6 class="mt-4">建议措施</h6>
+                                <ol>
+                                    <li>重点关注血糖控制，特别是空腹血糖水平</li>
+                                    <li>促进健康生活方式，帮助患者控制体重</li>
+                                    <li>对40岁以上人群进行定期筛查</li>
+                                    <li>对女性患者提供针对性的预防和干预措施</li>
+                                </ol>
+                                
+                                <div class="alert alert-info mt-4">
+                                    <i class="fas fa-info-circle me-2"></i>
+                                    本报告基于当前数据集分析生成，仅供参考。临床诊断请遵循专业医师建议。
+                                </div>
+                            </div>
+                            <div class="card-footer">
+                                <button class="btn btn-sm btn-outline-primary">
+                                    <i class="fas fa-download me-1"></i>下载完整报告
+                                </button>
+                                <button class="btn btn-sm btn-outline-secondary ms-2">
+                                    <i class="fas fa-print me-1"></i>打印报告
+                                </button>
+                            </div>
+                        </div>
+                    `;
+                    
+                    // 平滑滚动到报告
+                    reportOutput.scrollIntoView({
+                        behavior: 'smooth'
+                    });
+                }, 500);
+            }, 4000);
+        }
+    </script>
+</body>
+</html> 

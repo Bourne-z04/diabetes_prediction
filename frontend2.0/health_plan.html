@@ -1,0 +1,537 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+    <meta charset="UTF-8">
+    <title>健康方案 - 糖尿病预测系统</title>
+    <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/css/bootstrap.min.css">
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
+    <link rel="stylesheet" href="css/styles.css">
+    <style>
+        .container { 
+            padding-top: 80px;
+            margin-bottom: 50px;
+            position: relative;
+            z-index: 1;
+        }
+        .card { 
+            margin-bottom: 20px; 
+            box-shadow: 0 4px 15px rgba(0,0,0,0.1); 
+            background-color: rgba(255, 255, 255, 0.9);
+        }
+    </style>
+</head>
+<body>
+    <nav class="navbar navbar-expand-lg navbar-light navbar-custom-light fixed-top">
+        <div class="container-fluid">
+            <a class="navbar-brand" href="user_dashboard.html"><i class="fas fa-heartbeat me-2"></i>糖尿病预测系统</a>
+            <button class="navbar-toggler" type="button" data-bs-toggle="collapse" data-bs-target="#navbarNav">
+                <span class="navbar-toggler-icon"></span>
+            </button>
+            <div class="collapse navbar-collapse" id="navbarNav">
+                <ul class="navbar-nav me-auto">
+                    <li class="nav-item">
+                        <a class="nav-link" href="user_dashboard.html"><i class="fas fa-file-medical-alt me-1"></i>健康信息</a>
+                    </li>
+                    <li class="nav-item">
+                        <a class="nav-link" href="user_history.html"><i class="fas fa-history me-1"></i>历史记录</a>
+                    </li>
+                    <li class="nav-item">
+                        <a class="nav-link active" href="#"><i class="fas fa-notes-medical me-1"></i>健康方案</a>
+                    </li>
+                    <li class="nav-item">
+                        <a class="nav-link" href="ai_assistant.html"><i class="fas fa-robot me-1"></i>AI 助手</a>
+                    </li>
+                    <li class="nav-item">
+                        <a class="nav-link" href="#" id="openFeedbackModal" data-bs-toggle="modal" data-bs-target="#feedbackModal"><i class="fas fa-comment-dots me-1"></i>提交反馈</a>
+                    </li>
+                    <li class="nav-item">
+                        <a class="nav-link" href="user_profile.html"><i class="fas fa-user-cog me-1"></i>个人资料</a>
+                    </li>
+                </ul>
+                <div class="d-flex align-items-center">
+                    <div class="d-flex align-items-center me-3">
+                        <img src="images/logo.jpg" alt="Logo" class="me-2" style="width: 30px; height: 30px; border-radius: 50%; object-fit: cover;">
+                        <span id="userDisplayName" class="me-2"></span>
+                        <span id="userRoleBadge" class="badge bg-primary">用户</span>
+                    </div>
+                    <button class="btn btn-outline-secondary btn-sm" onclick="logout()"><i class="fas fa-sign-out-alt me-1"></i>退出登录</button>
+                </div>
+            </div>
+        </div>
+    </nav>
+
+    <div class="container">
+        <div class="row">
+            <div class="col-12">
+                <div class="alert alert-info fade-in-element">
+                    <i class="fas fa-info-circle me-2"></i>请填写以下信息，系统将为您生成个性化健康方案提示。您可以将生成的提示复制给AI助手，获取详细的建议。
+                </div>
+            </div>
+        </div>
+
+        <div class="row">
+            <!-- 基础信息 -->
+            <div class="col-md-6">
+                <div class="card mb-3 fade-in-element">
+                    <div class="card-header bg-primary text-white">
+                        <h5 class="mb-0"><i class="fas fa-user-circle me-2"></i>基础信息</h5>
+                    </div>
+                    <div class="card-body">
+                        <div class="mb-3">
+                            <label class="form-label">性别</label>
+                            <select class="form-select" id="plan-gender">
+                                <option value="男">男</option>
+                                <option value="女">女</option>
+                            </select>
+                        </div>
+                        
+                        <div class="mb-3">
+                            <label class="form-label">年龄</label>
+                            <input type="number" class="form-control" id="plan-age" min="1" max="120" placeholder="1-120岁">
+                        </div>
+                        
+                        <div class="mb-3">
+                            <label class="form-label">身高 (cm)</label>
+                            <input type="number" class="form-control" id="plan-height" min="50" max="250" placeholder="50-250 cm">
+                        </div>
+                        
+                        <div class="mb-3">
+                            <label class="form-label">体重 (kg)</label>
+                            <input type="number" class="form-control" id="plan-weight" min="20" max="300" placeholder="20-300 kg">
+                        </div>
+                        
+                        <div class="mb-3">
+                            <label class="form-label">糖尿病类型</label>
+                            <select class="form-select" id="plan-diabetesType">
+                                <option value="1型糖尿病">1型糖尿病</option>
+                                <option value="2型糖尿病">2型糖尿病</option>
+                                <option value="妊娠期糖尿病">妊娠期糖尿病</option>
+                                <option value="其他类型糖尿病">其他类型糖尿病</option>
+                                <option value="无">无（高风险/预防）</option>
+                            </select>
+                        </div>
+                        
+                        <div class="mb-3">
+                            <label class="form-label">患病时长 (年)</label>
+                            <input type="number" class="form-control" id="plan-diseaseDuration" min="0" max="100" placeholder="0-100年">
+                        </div>
+                    </div>
+                </div>
+            </div>
+            
+            <!-- 健康指标 -->
+            <div class="col-md-6">
+                <div class="card mb-3 fade-in-element" style="animation-delay: 0.2s;">
+                    <div class="card-header bg-success text-white">
+                        <h5 class="mb-0"><i class="fas fa-heartbeat me-2"></i>健康指标</h5>
+                    </div>
+                    <div class="card-body">
+                        <div class="mb-3">
+                            <label class="form-label">空腹血糖 (mmol/L)</label>
+                            <input type="number" class="form-control" id="plan-fastingBloodGlucose" min="0" max="40" step="0.1" placeholder="3.9-10.0 mmol/L">
+                        </div>
+                        
+                        <div class="mb-3">
+                            <label class="form-label">餐后2小时血糖 (mmol/L)</label>
+                            <input type="number" class="form-control" id="plan-postprandialGlucose" min="0" max="40" step="0.1" placeholder="3.9-13.9 mmol/L">
+                        </div>
+                        
+                        <div class="mb-3">
+                            <label class="form-label">糖化血红蛋白 (%)</label>
+                            <input type="number" class="form-control" id="plan-hba1c" min="0" max="20" step="0.1" placeholder="4.0-15.0 %">
+                        </div>
+                        
+                        <div class="mb-3">
+                            <label class="form-label">腰围 (cm)</label>
+                            <input type="number" class="form-control" id="plan-waistline" min="30" max="200" placeholder="男性<90cm，女性<85cm">
+                        </div>
+                        
+                        <div class="mb-3">
+                            <label class="form-label">日常运动量</label>
+                            <select class="form-select" id="plan-activityLevel">
+                                <option value="几乎不运动">几乎不运动</option>
+                                <option value="轻度运动">轻度运动 (每周1-3次)</option>
+                                <option value="中度运动">中度运动 (每周3-5次)</option>
+                                <option value="高强度运动">高强度运动 (每周5次以上)</option>
+                            </select>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+        
+        <div class="row">
+            <!-- 生活方式 -->
+            <div class="col-md-6">
+                <div class="card mb-3 fade-in-element" style="animation-delay: 0.4s;">
+                    <div class="card-header bg-info text-white">
+                        <h5 class="mb-0"><i class="fas fa-utensils me-2"></i>生活方式</h5>
+                    </div>
+                    <div class="card-body">
+                        <div class="mb-3">
+                            <label class="form-label">日常饮食习惯</label>
+                            <textarea class="form-control" id="plan-dietHabits" rows="2" placeholder="例如：每日三餐规律、喜欢甜食、主食以米饭为主等（10-200字）"></textarea>
+                        </div>
+                        
+                        <div class="mb-3">
+                            <label class="form-label">食物过敏/禁忌</label>
+                            <input type="text" class="form-control" id="plan-foodAllergies" placeholder="例如：海鲜过敏、乳糖不耐受等（如无请填"无"）">
+                        </div>
+                        
+                        <div class="mb-3">
+                            <label class="form-label">睡眠质量</label>
+                            <select class="form-select" id="plan-sleepQuality">
+                                <option value="很好">很好 (每晚7-8小时深度睡眠)</option>
+                                <option value="一般">一般 (睡眠时间足够但质量一般)</option>
+                                <option value="较差">较差 (易醒，难以入睡)</option>
+                                <option value="很差">很差 (长期失眠)</option>
+                            </select>
+                        </div>
+                        
+                        <div class="mb-3">
+                            <label class="form-label">压力水平</label>
+                            <select class="form-select" id="plan-stressLevel">
+                                <option value="几乎没有压力">几乎没有压力</option>
+                                <option value="轻度压力">轻度压力</option>
+                                <option value="中度压力">中度压力</option>
+                                <option value="高度压力">高度压力</option>
+                            </select>
+                        </div>
+                    </div>
+                </div>
+            </div>
+            
+            <!-- 用药情况 -->
+            <div class="col-md-6">
+                <div class="card mb-3 fade-in-element" style="animation-delay: 0.6s;">
+                    <div class="card-header bg-dark text-white">
+                        <h5 class="mb-0"><i class="fas fa-pills me-2"></i>用药情况</h5>
+                    </div>
+                    <div class="card-body">
+                        <div class="mb-3">
+                            <label class="form-label">是否使用降血糖药物</label>
+                            <select class="form-select" id="plan-takingMeds">
+                                <option value="是">是</option>
+                                <option value="否">否</option>
+                            </select>
+                        </div>
+                        
+                        <div class="mb-3">
+                            <label class="form-label">药物详情</label>
+                            <textarea class="form-control" id="plan-medicationDetails" rows="2" placeholder="请填写您正在服用的药物名称、剂量和用法（如无请填"无"）"></textarea>
+                        </div>
+                        
+                        <div class="mb-3">
+                            <label class="form-label">是否有其他慢性疾病</label>
+                            <select class="form-select" id="plan-otherDiseases">
+                                <option value="无">无</option>
+                                <option value="高血压">高血压</option>
+                                <option value="高血脂">高血脂</option>
+                                <option value="心脏病">心脏病</option>
+                                <option value="其他">其他（请在下方详情中说明）</option>
+                            </select>
+                        </div>
+                        
+                        <div class="mb-3">
+                            <label class="form-label">其他疾病详情</label>
+                            <textarea class="form-control" id="plan-otherDiseasesDetails" rows="2" placeholder="如有其他疾病，请在此详细说明（如无请填"无"）"></textarea>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+        
+        <div class="row">
+            <!-- 健康方案目标 -->
+            <div class="col-12">
+                <div class="card mb-3 fade-in-element" style="animation-delay: 0.8s;">
+                    <div class="card-header bg-primary text-white">
+                        <h5 class="mb-0"><i class="fas fa-bullseye me-2"></i>健康方案目标</h5>
+                    </div>
+                    <div class="card-body">
+                        <div class="mb-3">
+                            <label class="form-label">主要健康目标（可多选）</label>
+                            <div class="d-flex flex-wrap gap-2">
+                                <div class="form-check">
+                                    <input class="form-check-input" type="checkbox" value="控制血糖" id="goal-glucose">
+                                    <label class="form-check-label" for="goal-glucose">控制血糖</label>
+                                </div>
+                                <div class="form-check">
+                                    <input class="form-check-input" type="checkbox" value="减轻体重" id="goal-weight">
+                                    <label class="form-check-label" for="goal-weight">减轻体重</label>
+                                </div>
+                                <div class="form-check">
+                                    <input class="form-check-input" type="checkbox" value="增加运动量" id="goal-exercise">
+                                    <label class="form-check-label" for="goal-exercise">增加运动量</label>
+                                </div>
+                                <div class="form-check">
+                                    <input class="form-check-input" type="checkbox" value="改善饮食习惯" id="goal-diet">
+                                    <label class="form-check-label" for="goal-diet">改善饮食习惯</label>
+                                </div>
+                                <div class="form-check">
+                                    <input class="form-check-input" type="checkbox" value="增强体质" id="goal-fitness">
+                                    <label class="form-check-label" for="goal-fitness">增强体质</label>
+                                </div>
+                                <div class="form-check">
+                                    <input class="form-check-input" type="checkbox" value="预防并发症" id="goal-complications">
+                                    <label class="form-check-label" for="goal-complications">预防并发症</label>
+                                </div>
+                                <div class="form-check">
+                                    <input class="form-check-input" type="checkbox" value="改善睡眠" id="goal-sleep">
+                                    <label class="form-check-label" for="goal-sleep">改善睡眠</label>
+                                </div>
+                                <div class="form-check">
+                                    <input class="form-check-input" type="checkbox" value="减轻压力" id="goal-stress">
+                                    <label class="form-check-label" for="goal-stress">减轻压力</label>
+                                </div>
+                            </div>
+                        </div>
+                        
+                        <div class="mb-3">
+                            <label class="form-label">目标详情和其他说明</label>
+                            <textarea class="form-control" id="plan-goalDetails" rows="3" placeholder="请详细描述您的健康目标和对健康方案的期望（最多500字）"></textarea>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+        
+        <div class="row mb-4">
+            <div class="col-12 text-center">
+                <button id="generatePlanBtn" class="btn btn-primary btn-lg px-5" onclick="generateHealthPlanPrompt()">
+                    <i class="fas fa-magic me-2"></i>生成健康方案提示
+                </button>
+            </div>
+        </div>
+        
+        <div class="row" id="planResultSection" style="display: none;">
+            <div class="col-12">
+                <div class="card fade-in-element">
+                    <div class="card-header bg-success text-white">
+                        <h5 class="mb-0"><i class="fas fa-file-medical me-2"></i>您的健康方案提示已生成</h5>
+                    </div>
+                    <div class="card-body">
+                        <div class="mb-3">
+                            <p class="mb-2">请复制下面的提示文本，并粘贴到 <a href="ai_assistant.html" class="link-primary">AI助手</a> 页面获取详细的健康建议：</p>
+                            <div class="position-relative">
+                                <textarea id="planPromptResult" class="form-control bg-light" rows="8" readonly></textarea>
+                                <button class="btn btn-sm btn-outline-primary position-absolute top-0 end-0 m-2" onclick="copyPromptToClipboard()">
+                                    <i class="fas fa-copy"></i> 复制
+                                </button>
+                            </div>
+                        </div>
+                        <div class="d-flex gap-2 justify-content-end">
+                            <button class="btn btn-primary" onclick="window.location.href='ai_assistant.html'">
+                                <i class="fas fa-robot me-2"></i>前往AI助手
+                            </button>
+                            <button class="btn btn-outline-secondary" onclick="document.getElementById('planResultSection').style.display = 'none'">
+                                <i class="fas fa-redo me-2"></i>修改信息
+                            </button>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+        
+        <div id="result" class="mt-3"></div>
+    </div>
+    
+    <!-- 反馈模态框 -->
+    <div class="modal fade" id="feedbackModal" tabindex="-1" aria-hidden="true">
+        <div class="modal-dialog">
+            <div class="modal-content">
+                <div class="modal-header bg-primary text-white">
+                    <h5 class="modal-title"><i class="fas fa-comment-dots me-2"></i>提交反馈</h5>
+                    <button type="button" class="btn-close btn-close-white" data-bs-dismiss="modal" aria-label="Close"></button>
+                </div>
+                <div class="modal-body">
+                    <div class="mb-3">
+                        <label for="feedbackType" class="form-label">反馈类型</label>
+                        <select class="form-select" id="feedbackType">
+                            <option value="功能建议">功能建议</option>
+                            <option value="问题报告">问题报告</option>
+                            <option value="内容纠错">内容纠错</option>
+                            <option value="其他">其他</option>
+                        </select>
+                    </div>
+                    <div class="mb-3">
+                        <label for="feedbackContent" class="form-label">反馈内容</label>
+                        <textarea class="form-control" id="feedbackContent" rows="4" placeholder="请详细描述您的反馈内容..."></textarea>
+                    </div>
+                </div>
+                <div class="modal-footer">
+                    <button type="button" class="btn btn-secondary" data-bs-dismiss="modal">取消</button>
+                    <button type="button" class="btn btn-primary" id="submitFeedback" onclick="submitFeedback()">提交反馈</button>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <script src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/js/bootstrap.bundle.min.js"></script>
+    <script src="app.js"></script>
+    <script>
+        // 页面加载时检查用户登录状态
+        document.addEventListener('DOMContentLoaded', function() {
+            const auth = checkAuth();
+            if (!auth) return;
+            
+            initPageEffects();
+        });
+        
+        // 生成健康方案提示
+        function generateHealthPlanPrompt() {
+            // 获取表单数据
+            const gender = document.getElementById('plan-gender').value;
+            const age = document.getElementById('plan-age').value;
+            const height = document.getElementById('plan-height').value;
+            const weight = document.getElementById('plan-weight').value;
+            const diabetesType = document.getElementById('plan-diabetesType').value;
+            const diseaseDuration = document.getElementById('plan-diseaseDuration').value;
+            
+            const fastingBloodGlucose = document.getElementById('plan-fastingBloodGlucose').value;
+            const postprandialGlucose = document.getElementById('plan-postprandialGlucose').value;
+            const hba1c = document.getElementById('plan-hba1c').value;
+            const waistline = document.getElementById('plan-waistline').value;
+            const activityLevel = document.getElementById('plan-activityLevel').value;
+            
+            const dietHabits = document.getElementById('plan-dietHabits').value;
+            const foodAllergies = document.getElementById('plan-foodAllergies').value;
+            const sleepQuality = document.getElementById('plan-sleepQuality').value;
+            const stressLevel = document.getElementById('plan-stressLevel').value;
+            
+            const takingMeds = document.getElementById('plan-takingMeds').value;
+            const medicationDetails = document.getElementById('plan-medicationDetails').value;
+            const otherDiseases = document.getElementById('plan-otherDiseases').value;
+            const otherDiseasesDetails = document.getElementById('plan-otherDiseasesDetails').value;
+            
+            // 获取选中的健康目标
+            const goals = [];
+            document.querySelectorAll('input[type="checkbox"]:checked').forEach(checkbox => {
+                goals.push(checkbox.value);
+            });
+            
+            const goalDetails = document.getElementById('plan-goalDetails').value;
+            
+            // 表单验证
+            if (!gender || !age || !height || !weight || !diabetesType || !diseaseDuration) {
+                showMessage('请填写基础信息中的所有必填项', 'error');
+                return;
+            }
+            
+            if (!fastingBloodGlucose || !activityLevel) {
+                showMessage('请填写健康指标中的必填项', 'error');
+                return;
+            }
+            
+            if (!dietHabits || !sleepQuality || !stressLevel) {
+                showMessage('请填写生活方式中的必填项', 'error');
+                return;
+            }
+            
+            if (!takingMeds) {
+                showMessage('请选择是否使用降血糖药物', 'error');
+                return;
+            }
+            
+            if (goals.length === 0) {
+                showMessage('请至少选择一个健康目标', 'error');
+                return;
+            }
+            
+            // 计算BMI
+            const bmi = (weight / ((height / 100) * (height / 100))).toFixed(1);
+            
+            // 生成提示文本
+            let promptText = `我是一名${gender}性，${age}岁，身高${height}cm，体重${weight}kg，BMI指数为${bmi}，`;
+            
+            if (diabetesType === '无') {
+                promptText += `目前没有糖尿病，但有相关风险，希望进行预防。`;
+            } else {
+                promptText += `我患有${diabetesType}已经${diseaseDuration}年。`;
+            }
+            
+            promptText += `\n\n我的健康指标：空腹血糖${fastingBloodGlucose}mmol/L`;
+            if (postprandialGlucose) promptText += `，餐后2小时血糖${postprandialGlucose}mmol/L`;
+            if (hba1c) promptText += `，糖化血红蛋白${hba1c}%`;
+            if (waistline) promptText += `，腰围${waistline}cm`;
+            promptText += `。日常运动量为"${activityLevel}"。`;
+            
+            promptText += `\n\n生活习惯：我的日常饮食习惯是"${dietHabits}"`;
+            if (foodAllergies && foodAllergies !== '无') promptText += `，食物过敏/禁忌：${foodAllergies}`;
+            promptText += `。睡眠质量为"${sleepQuality}"，压力水平为"${stressLevel}"。`;
+            
+            promptText += `\n\n用药情况：${takingMeds === '是' ? '正在服用降血糖药物' : '目前没有服用降血糖药物'}`;
+            if (medicationDetails && medicationDetails !== '无') promptText += `，具体用药为：${medicationDetails}`;
+            if (otherDiseases !== '无') {
+                promptText += `。我还患有${otherDiseases}`;
+                if (otherDiseasesDetails && otherDiseasesDetails !== '无') promptText += `，具体情况：${otherDiseasesDetails}`;
+            }
+            
+            promptText += `\n\n我的健康目标是：${goals.join('、')}`;
+            if (goalDetails) promptText += `。具体期望：${goalDetails}`;
+            
+            promptText += `\n\n请根据以上信息，为我制定一个全面的糖尿病管理健康方案，包括饮食计划、运动建议、生活方式调整和注意事项。`;
+            
+            // 显示结果区域
+            document.getElementById('planPromptResult').value = promptText;
+            document.getElementById('planResultSection').style.display = 'block';
+            document.getElementById('planResultSection').scrollIntoView({ behavior: 'smooth' });
+            
+            // 显示成功消息
+            showMessage('健康方案提示已生成', 'success');
+        }
+        
+        // 复制提示文本到剪贴板
+        function copyPromptToClipboard() {
+            const promptText = document.getElementById('planPromptResult');
+            promptText.select();
+            document.execCommand('copy');
+            
+            showMessage('已复制到剪贴板', 'success');
+        }
+        
+        // 提交反馈
+        function submitFeedback() {
+            const auth = checkAuth();
+            if (!auth) return;
+            
+            const feedbackType = document.getElementById('feedbackType').value;
+            const feedbackContent = document.getElementById('feedbackContent').value;
+            
+            if (!feedbackContent) {
+                showMessage('请填写反馈内容', 'error');
+                return;
+            }
+            
+            // 显示加载状态
+            const submitBtn = document.getElementById('submitFeedback');
+            submitBtn.disabled = true;
+            submitBtn.innerHTML = '<span class="spinner-border spinner-border-sm" role="status" aria-hidden="true"></span> 提交中...';
+            
+            // 调用API提交反馈
+            apiRequest('/feedback', 'POST', {
+                type: feedbackType,
+                content: feedbackContent,
+                page: 'health_plan'
+            }, auth.token)
+            .then(response => {
+                showMessage('感谢您的反馈！', 'success');
+                // 关闭模态框
+                const modal = bootstrap.Modal.getInstance(document.getElementById('feedbackModal'));
+                if (modal) modal.hide();
+                
+                // 清空反馈内容
+                document.getElementById('feedbackContent').value = '';
+            })
+            .catch(error => {
+                showMessage(`提交失败: ${error.message}`, 'error');
+            })
+            .finally(() => {
+                // 恢复按钮状态
+                submitBtn.disabled = false;
+                submitBtn.innerHTML = '提交反馈';
+            });
+        }
+    </script>
+</body>
+</html> 
