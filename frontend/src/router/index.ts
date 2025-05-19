@@ -60,7 +60,19 @@ const router = createRouter({
     {
       path: '/admin/users',
       name: 'adminUsers',
-      component: () => import('@/views/admin/UsersView.vue'),
+      component: () => import('@/views/admin/UsersManagementView.vue'),
+      meta: { requiresAdmin: true }
+    },
+    {
+      path: '/admin/data-upload',
+      name: 'adminDataUpload',
+      component: () => import('@/views/admin/DataUploadView.vue'),
+      meta: { requiresAdmin: true }
+    },
+    {
+      path: '/admin/visualization',
+      name: 'adminVisualization',
+      component: () => import('@/views/admin/DataVisualizationView.vue'),
       meta: { requiresAdmin: true }
     },
     // 其他页面

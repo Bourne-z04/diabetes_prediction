@@ -3,6 +3,7 @@ import { computed } from 'vue'
 import { RouterLink, RouterView, useRoute } from 'vue-router'
 import { useAuthStore } from '@/stores/auth'
 import AIAssistant from '@/components/AIAssistant.vue'
+import AppNotification from '@/components/AppNotification.vue'
 
 const route = useRoute()
 const authStore = useAuthStore()
@@ -25,7 +26,9 @@ const userNavItems = [
 const adminNavItems = [
   { name: '首页', path: '/', icon: 'bi bi-house-door' },
   { name: '仪表盘', path: '/admin/dashboard', icon: 'bi bi-speedometer2' },
-  { name: '用户管理', path: '/admin/users', icon: 'bi bi-people-gear' }
+  { name: '用户管理', path: '/admin/users', icon: 'bi bi-people-gear' },
+  { name: '数据上传', path: '/admin/data-upload', icon: 'bi bi-cloud-upload' },
+  { name: '数据可视化', path: '/admin/visualization', icon: 'bi bi-graph-up' }
 ]
 
 // 根据用户角色显示不同的导航项
@@ -100,6 +103,9 @@ function handleLogout() {
       
       <!-- AI助手组件 -->
       <AIAssistant v-if="isAuthenticated" />
+      
+      <!-- 通知组件 -->
+      <AppNotification />
     </main>
     
     <!-- 页脚 -->
@@ -122,7 +128,7 @@ function handleLogout() {
 
 <style>
 @import '@/assets/main.css';
-@import 'https://cdn.jsdelivr.net/npm/bootstrap-icons@1.11.1/font/bootstrap-icons.css';
+@import 'https://cdn.jsdelivr.net/npm/bootstrap-icons@1.11.3/font/bootstrap-icons.css';
 
 /* 全局样式 */
 html, body {
