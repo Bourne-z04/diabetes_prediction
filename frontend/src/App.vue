@@ -15,7 +15,7 @@ const isAdmin = computed(() => authStore.isAdmin)
 // 用户菜单项
 const userNavItems = [
   { name: '首页', path: '/', icon: 'bi bi-house-door' },
-  { name: '健康方案', path: '/health-plan', icon: 'bi bi-clipboard2-list' },
+  { name: '健康方案', path: '/health-plan', icon: 'bi bi-clipboard2-check' },
   { name: '历史数据', path: '/user/history', icon: 'bi bi-graph-up' },
   { name: '个人资料', path: '/user/profile', icon: 'bi bi-person-gear' },
   { name: '用户反馈', path: '/user/feedback', icon: 'bi bi-chat-dots' }
@@ -40,7 +40,7 @@ function handleLogout() {
 <template>
   <div class="app-container">
     <!-- 固定背景 -->
-    <div class="fixed-background" v-if="isAuthenticated"></div>
+    <div class="fixed-background"></div>
     
     <!-- 导航栏 -->
     <nav class="navbar navbar-expand-lg navbar-blur" v-if="isAuthenticated">
@@ -68,7 +68,7 @@ function handleLogout() {
             <div class="dropdown">
               <a href="#" class="text-white dropdown-toggle text-decoration-none" 
                  id="userDropdown" data-bs-toggle="dropdown" aria-expanded="false">
-                <i class="bi bi-person-circle me-1"></i>
+                <img src="@/assets/images/logo.jpg" alt="User Avatar" class="avatar-icon me-1" style="width: 24px; height: 24px; border-radius: 50%;">
                 {{ authStore.user?.username || '用户' }}
               </a>
               <ul class="dropdown-menu dropdown-menu-end dropdown-blur" aria-labelledby="userDropdown">
@@ -103,16 +103,16 @@ function handleLogout() {
     </main>
     
     <!-- 页脚 -->
-    <footer class="footer bg-light py-4 mt-auto" v-if="!isAuthenticated">
+    <footer class="footer py-4 mt-auto">
       <div class="container">
         <div class="row">
           <div class="col-md-6">
             <p class="mb-0">&copy; {{ new Date().getFullYear() }} 糖尿病健康方案定制系统</p>
           </div>
           <div class="col-md-6 text-md-end">
-            <a href="#" class="text-muted me-3">隐私政策</a>
-            <a href="#" class="text-muted me-3">使用条款</a>
-            <a href="#" class="text-muted">联系我们</a>
+            <a href="#" class="me-3">隐私政策</a>
+            <a href="#" class="me-3">使用条款</a>
+            <a href="#">联系我们</a>
           </div>
         </div>
       </div>
@@ -129,6 +129,7 @@ html, body {
   height: 100%;
   margin: 0;
   padding: 0;
+  background-color: #1e293b; /* 深色背景，防止背景图片加载前出现白色 */
 }
 
 /* 固定背景 */
@@ -140,9 +141,11 @@ html, body {
   position: fixed;
   top: 0;
   left: 0;
+  right: 0;
+  bottom: 0;
   width: 100%;
   height: 100%;
-  z-index: -2;
+  z-index: 0;
 }
 
 .fixed-background::after {
@@ -150,10 +153,12 @@ html, body {
   position: fixed;
   top: 0;
   left: 0;
+  right: 0;
+  bottom: 0;
   width: 100%;
   height: 100%;
   background-color: rgba(0, 0, 0, 0.6);
-  z-index: -1;
+  z-index: 1;
 }
 
 /* 应用容器 */
@@ -242,6 +247,18 @@ main {
 /* 页脚样式 */
 .footer {
   border-top: 1px solid rgba(0, 0, 0, 0.05);
+  background-color: rgba(30, 41, 59, 0.85) !important;
+  backdrop-filter: blur(10px);
+  color: #fff;
+}
+
+.footer a {
+  color: rgba(255, 255, 255, 0.7);
+  text-decoration: none;
+}
+
+.footer a:hover {
+  color: #fff;
 }
 
 /* 模态框样式修复 */

@@ -216,9 +216,10 @@ function scrollToBottom() {
   right: 20px;
   width: 350px;
   height: 500px;
-  background-color: white;
+  background-color: rgba(30, 41, 59, 0.85);
+  backdrop-filter: blur(10px);
   border-radius: 10px;
-  box-shadow: 0 5px 15px rgba(0, 0, 0, 0.2);
+  box-shadow: 0 5px 15px rgba(0, 0, 0, 0.4);
   display: flex;
   flex-direction: column;
   overflow: hidden;
@@ -226,6 +227,7 @@ function scrollToBottom() {
   opacity: 0;
   transform-origin: bottom right;
   transition: all 0.3s ease;
+  border: 1px solid rgba(255, 255, 255, 0.1);
 }
 
 .chat-window-active {
@@ -255,7 +257,7 @@ function scrollToBottom() {
   flex: 1;
   padding: 15px;
   overflow-y: auto;
-  background-color: #f8f9fa;
+  background-color: rgba(22, 31, 46, 0.5);
 }
 
 .message {
@@ -286,13 +288,14 @@ function scrollToBottom() {
 }
 
 .assistant-message .message-content {
-  background-color: white;
+  background-color: rgba(255, 255, 255, 0.1);
+  color: #fff;
   border-top-left-radius: 4px;
 }
 
 .message-time {
   font-size: 0.7rem;
-  color: #6c757d;
+  color: rgba(255, 255, 255, 0.6);
   margin-top: 5px;
   text-align: right;
 }
@@ -300,17 +303,23 @@ function scrollToBottom() {
 .chat-input {
   padding: 10px;
   display: flex;
-  background-color: white;
-  border-top: 1px solid #e9ecef;
+  background-color: rgba(30, 41, 59, 0.9);
+  border-top: 1px solid rgba(255, 255, 255, 0.1);
 }
 
 .chat-input input {
   flex: 1;
   padding: 10px;
-  border: 1px solid #ced4da;
+  border: 1px solid rgba(255, 255, 255, 0.2);
   border-radius: 20px;
   margin-right: 10px;
   outline: none;
+  background-color: rgba(255, 255, 255, 0.1);
+  color: #fff;
+}
+
+.chat-input input::placeholder {
+  color: rgba(255, 255, 255, 0.5);
 }
 
 .chat-input button {
@@ -340,7 +349,7 @@ function scrollToBottom() {
 .typing-indicator {
   display: flex;
   padding: 6px 10px;
-  background-color: white;
+  background-color: rgba(255, 255, 255, 0.1);
   border-radius: 10px;
   width: fit-content;
   margin-bottom: 15px;

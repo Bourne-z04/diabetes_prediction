@@ -31,9 +31,6 @@ function scrollToRoles() {
 
 <template>
   <div class="home">
-    <!-- 固定背景 -->
-    <div class="fixed-background"></div>
-    
     <!-- 头部横幅 -->
     <div class="header">
       <div class="header-content">
@@ -307,30 +304,6 @@ function scrollToRoles() {
 </template>
 
 <style scoped>
-.fixed-background {
-  background-image: url('@/assets/images/bg.jpg');
-  background-size: cover;
-  background-position: center;
-  background-attachment: fixed;
-  position: fixed;
-  top: 0;
-  left: 0;
-  width: 100%;
-  height: 100%;
-  z-index: -2;
-}
-
-.fixed-background::after {
-  content: '';
-  position: fixed;
-  top: 0;
-  left: 0;
-  width: 100%;
-  height: 100%;
-  background-color: rgba(0, 0, 0, 0.6);
-  z-index: -1;
-}
-
 .header {
   position: relative;
   overflow: hidden;

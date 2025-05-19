@@ -58,16 +58,46 @@ export async function apiRequest(url: string, method = 'GET', data: any = null) 
 export const api = {
     // 认证相关
     auth: {
-        login: (data: { email?: string; username?: string; password: string }) => 
+        login: (data: { email: string; password: string }) => 
             apiRequest('/auth/login', 'POST', data),
-        register: (data: any) => apiRequest('/auth/register', 'POST', data),
+        register: (data: { username: string; email: string; password: string }) => 
+            apiRequest('/auth/register', 'POST', data),
     },
     
-    // 用户相关
+    // 用户健康信息相关
     user: {
-        getProfile: () => apiRequest('/user/profile', 'GET'),
-        updateProfile: (data: any) => apiRequest('/user/profile', 'PUT', data),
-        getHistory: (params: any = {}) => apiRequest('/user/history', 'GET', params),
+        // 保存健康信息
+        saveHealthInfo: (data: { 
+            age: number; 
+            bmi: number; 
+            insulin: number; 
+            skin_thickness: number; 
+            glucose: number 
+        }) => apiRequest('/user/saveinfo', 'POST', data),
+        
+        // 获取预测结果
+        getPrediction: () => apiRequest('/user/predict', 'GET'),
+        
+        // 导出预测结果
+        exportPrediction: () => apiRequest('/user/predict', 'GET', { export: 'true' }),
+        
+        // 提交反馈
+        submitFeedback: (data: { content: string; contact?: string }) => 
+            apiRequest('/user/feedback', 'POST', data),
+        
+        // 获取健康记录历史
+        getHealthRecords: () => apiRequest('/user/health_records', 'GET'),
+        
+        // 获取特定记录的预测结果
+        getPredictionById: (recordId: number) => 
+            apiRequest(`/user/predict/${recordId}`, 'GET'),
+        
+        // 导出特定记录的预测结果
+        exportPredictionById: (recordId: number) => 
+            apiRequest(`/user/predict/${recordId}`, 'GET', { export: 'true' }),
+        
+        // AI聊天服务
+        aiChat: (prompt: string) => apiRequest('/user/ai_chat', 'POST', { prompt })
     },
     
     // 健康方案相关

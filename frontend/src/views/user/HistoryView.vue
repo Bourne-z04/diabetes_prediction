@@ -1,50 +1,87 @@
 <script setup lang="ts">
-import { ref, onMounted } from 'vue'
+import { ref, onMounted, computed } from 'vue'
 import { useAuthStore } from '@/stores/auth'
 import { useRouter } from 'vue-router'
+import { api } from '@/services/api'
 
 const router = useRouter()
 const authStore = useAuthStore()
 const loading = ref(false)
 const error = ref<string | null>(null)
+const healthRecords = ref<any[]>([])
 
 // 检查用户是否已登录
 if (!authStore.isAuthenticated) {
   router.push('/login')
 }
 
-// 模拟血糖数据(每日更新)
-const bloodSugarData = ref([
-  { date: '2023-12-01', value: 5.6 },
-  { date: '2023-12-02', value: 6.2 },
-  { date: '2023-12-03', value: 5.9 },
-  { date: '2023-12-04', value: 5.7 },
-  { date: '2023-12-05', value: 6.0 },
-  { date: '2023-12-06', value: 5.8 },
-  { date: '2023-12-07', value: 6.1 },
-])
+// 当前选择的记录ID
+const selectedRecordId = ref<number | null>(null)
+// 当前查看的记录详情
+const currentRecordDetails = ref<any>(null)
+const recordLoading = ref(false)
 
-// 模拟体征数据(每周更新)
-const bodyMeasurements = ref([
-  { date: '2023-11-08', weight: 69.5, waistline: 82, hipline: 95 },
-  { date: '2023-11-15', weight: 69.0, waistline: 81, hipline: 94 },
-  { date: '2023-11-22', weight: 68.5, waistline: 81, hipline: 94 },
-  { date: '2023-11-29', weight: 68.0, waistline: 80, hipline: 93 },
-  { date: '2023-12-06', weight: 67.5, waistline: 79, hipline: 93 },
-])
+// 选择记录查看详情
+async function selectRecord(recordId: number) {
+  if (selectedRecordId.value === recordId && currentRecordDetails.value) {
+    // 如果已经选择，则取消选择
+    selectedRecordId.value = null
+    currentRecordDetails.value = null
+    return
+  }
+  
+  selectedRecordId.value = recordId
+  recordLoading.value = true
+  
+  try {
+    const result = await api.user.getPredictionById(recordId)
+    currentRecordDetails.value = result
+  } catch (err: any) {
+    error.value = err.message || '加载记录详情失败'
+  } finally {
+    recordLoading.value = false
+  }
+}
 
-// 模拟医嘱和体检报告数据
-const medicalRecords = ref([
-  { date: '2023-10-15', type: '体检报告', content: '血常规、肝功能、肾功能基本正常，HbA1c: 6.8%，血脂偏高，建议加强饮食控制和运动。' },
-  { date: '2023-11-02', type: '医嘱', content: '根据您的血糖监测情况，建议调整口服降糖药剂量，增加阿卡波糖每次50mg，每日三次。请注意监测空腹血糖变化。' },
-  { date: '2023-12-01', type: '体检报告', content: 'HbA1c下降至6.5%，血脂有所改善，继续保持目前的治疗方案，三个月后复查。' },
-])
+// 导出特定记录
+async function exportRecord(recordId: number) {
+  try {
+    const exportData = await api.user.exportPredictionById(recordId)
+    
+    // 创建一个下载链接
+    const jsonString = JSON.stringify(exportData, null, 2)
+    const blob = new Blob([jsonString], { type: 'application/json' })
+    const url = URL.createObjectURL(blob)
+    
+    const a = document.createElement('a')
+    a.href = url
+    a.download = `diabetes_prediction_${recordId}_${new Date().toISOString().split('T')[0]}.json`
+    document.body.appendChild(a)
+    a.click()
+    document.body.removeChild(a)
+    URL.revokeObjectURL(url)
+  } catch (err: any) {
+    error.value = err.message || '导出记录失败'
+  }
+}
 
-const activeTab = ref('bloodSugar')
+// 风险等级计算
+function getRiskLevel(probability: number) {
+  if (probability < 0.3) return { level: '低风险', color: 'success' }
+  if (probability < 0.7) return { level: '中等风险', color: 'warning' }
+  return { level: '高风险', color: 'danger' }
+}
 
-onMounted(() => {
-  // 这里可以加载实际的历史数据
-  console.log('HistoryView加载完成')
+onMounted(async () => {
+  loading.value = true
+  try {
+    // 从API获取历史记录
+    healthRecords.value = await api.user.getHealthRecords()
+  } catch (err: any) {
+    error.value = err.message || '加载历史记录失败'
+  } finally {
+    loading.value = false
+  }
 })
 </script>
 
@@ -65,97 +102,151 @@ onMounted(() => {
       </div>
       
       <div v-else>
-        <!-- 导航标签 -->
-        <ul class="nav nav-tabs mb-4">
-          <li class="nav-item">
-            <a class="nav-link" :class="{ active: activeTab === 'bloodSugar' }" @click.prevent="activeTab = 'bloodSugar'" href="#">空腹血糖记录</a>
-          </li>
-          <li class="nav-item">
-            <a class="nav-link" :class="{ active: activeTab === 'bodyMeasurements' }" @click.prevent="activeTab = 'bodyMeasurements'" href="#">体征测量记录</a>
-          </li>
-          <li class="nav-item">
-            <a class="nav-link" :class="{ active: activeTab === 'medicalRecords' }" @click.prevent="activeTab = 'medicalRecords'" href="#">医嘱与体检报告</a>
-          </li>
-        </ul>
-        
-        <!-- 空腹血糖记录 -->
-        <div class="card" v-if="activeTab === 'bloodSugar'">
+        <div class="card mb-4">
           <div class="card-header bg-primary text-white">
-            <h5 class="mb-0">每日空腹血糖记录</h5>
+            <h5 class="mb-0">健康测量历史记录</h5>
           </div>
+          
           <div class="card-body">
-            <div class="table-responsive">
-              <table class="table table-striped">
-                <thead>
-                  <tr>
-                    <th>日期</th>
-                    <th>空腹血糖 (mmol/L)</th>
-                    <th>状态评估</th>
-                  </tr>
-                </thead>
-                <tbody>
-                  <tr v-for="(record, index) in bloodSugarData" :key="index">
-                    <td>{{ record.date }}</td>
-                    <td>{{ record.value }}</td>
-                    <td>
-                      <span :class="record.value < 6.1 ? 'badge bg-success' : (record.value < 7.0 ? 'badge bg-warning' : 'badge bg-danger')">
-                        {{ record.value < 6.1 ? '正常' : (record.value < 7.0 ? '偏高' : '高') }}
-                      </span>
-                    </td>
-                  </tr>
-                </tbody>
-              </table>
+            <div v-if="healthRecords.length === 0" class="text-center py-5">
+              <i class="bi bi-clipboard-x fs-1 text-muted mb-3"></i>
+              <p class="text-muted">暂无历史记录数据</p>
+              <router-link to="/user/dashboard" class="btn btn-primary mt-3">
+                <i class="bi bi-plus-circle me-2"></i>添加健康数据
+              </router-link>
             </div>
-          </div>
-        </div>
-        
-        <!-- 体征测量记录 -->
-        <div class="card" v-if="activeTab === 'bodyMeasurements'">
-          <div class="card-header bg-info text-white">
-            <h5 class="mb-0">每周体征测量记录</h5>
-          </div>
-          <div class="card-body">
-            <div class="table-responsive">
-              <table class="table table-striped">
-                <thead>
-                  <tr>
-                    <th>日期</th>
-                    <th>体重 (kg)</th>
-                    <th>腰围 (cm)</th>
-                    <th>臀围 (cm)</th>
-                    <th>腰臀比</th>
-                  </tr>
-                </thead>
-                <tbody>
-                  <tr v-for="(record, index) in bodyMeasurements" :key="index">
-                    <td>{{ record.date }}</td>
-                    <td>{{ record.weight }}</td>
-                    <td>{{ record.waistline }}</td>
-                    <td>{{ record.hipline }}</td>
-                    <td>{{ (record.waistline / record.hipline).toFixed(2) }}</td>
-                  </tr>
-                </tbody>
-              </table>
-            </div>
-          </div>
-        </div>
-        
-        <!-- 医嘱与体检报告 -->
-        <div class="card" v-if="activeTab === 'medicalRecords'">
-          <div class="card-header bg-warning text-dark">
-            <h5 class="mb-0">医嘱与体检报告记录</h5>
-          </div>
-          <div class="card-body">
-            <div class="accordion" id="medicalRecordsAccordion">
-              <div class="accordion-item" v-for="(record, index) in medicalRecords" :key="index">
-                <h2 class="accordion-header">
-                  <button class="accordion-button" :class="{ collapsed: index !== 0 }" type="button" data-bs-toggle="collapse" :data-bs-target="'#collapse' + index" :aria-expanded="index === 0" :aria-controls="'collapse' + index">
-                    {{ record.date }} - {{ record.type }}
-                  </button>
-                </h2>
-                <div :id="'collapse' + index" class="accordion-collapse collapse" :class="{ show: index === 0 }" data-bs-parent="#medicalRecordsAccordion">
-                  <div class="accordion-body">
-                    {{ record.content }}
+            
+            <div v-else>
+              <div class="table-responsive">
+                <table class="table table-hover">
+                  <thead>
+                    <tr>
+                      <th>日期</th>
+                      <th>年龄</th>
+                      <th>BMI</th>
+                      <th>胰岛素</th>
+                      <th>皮肤厚度</th>
+                      <th>血糖</th>
+                      <th>糖尿病风险</th>
+                      <th>操作</th>
+                    </tr>
+                  </thead>
+                  <tbody>
+                    <tr v-for="record in healthRecords" :key="record.id" 
+                        :class="{ 'table-active': selectedRecordId === record.id }">
+                      <td>{{ new Date(record.created_at).toLocaleString() }}</td>
+                      <td>{{ record.health_info.age }}</td>
+                      <td>{{ record.health_info.bmi }}</td>
+                      <td>{{ record.health_info.insulin }}</td>
+                      <td>{{ record.health_info.skin_thickness }}</td>
+                      <td>{{ record.health_info.glucose }}</td>
+                      <td>
+                        <span :class="`badge bg-${getRiskLevel(record.probability).color}`">
+                          {{ (record.probability * 100).toFixed(1) }}%
+                        </span>
+                      </td>
+                      <td>
+                        <div class="btn-group btn-group-sm">
+                          <button class="btn btn-outline-primary" 
+                                  @click="selectRecord(record.id)"
+                                  :disabled="recordLoading">
+                            <i v-if="recordLoading && selectedRecordId === record.id" 
+                               class="spinner-border spinner-border-sm"></i>
+                            <i v-else class="bi bi-eye"></i>
+                          </button>
+                          <button class="btn btn-outline-success" 
+                                  @click="exportRecord(record.id)">
+                            <i class="bi bi-download"></i>
+                          </button>
+                        </div>
+                      </td>
+                    </tr>
+                  </tbody>
+                </table>
+              </div>
+              
+              <!-- 当前选中记录的详情 -->
+              <div v-if="currentRecordDetails" class="record-details mt-4">
+                <h4 class="mb-3">详细分析</h4>
+                
+                <div class="row">
+                  <div class="col-md-6">
+                    <div class="card mb-3">
+                      <div class="card-header">
+                        <h5 class="mb-0">健康数据</h5>
+                      </div>
+                      <div class="card-body">
+                        <table class="table table-sm">
+                          <tbody>
+                            <tr>
+                              <th>测量日期:</th>
+                              <td>{{ new Date(currentRecordDetails.health_info.created_at).toLocaleString() }}</td>
+                            </tr>
+                            <tr>
+                              <th>年龄:</th>
+                              <td>{{ currentRecordDetails.health_info.age }}</td>
+                            </tr>
+                            <tr>
+                              <th>BMI:</th>
+                              <td>{{ currentRecordDetails.health_info.bmi }}</td>
+                            </tr>
+                            <tr>
+                              <th>胰岛素 (μU/ml):</th>
+                              <td>{{ currentRecordDetails.health_info.insulin }}</td>
+                            </tr>
+                            <tr>
+                              <th>皮肤厚度 (mm):</th>
+                              <td>{{ currentRecordDetails.health_info.skin_thickness }}</td>
+                            </tr>
+                            <tr>
+                              <th>血糖 (mg/dL):</th>
+                              <td>{{ currentRecordDetails.health_info.glucose }}</td>
+                            </tr>
+                          </tbody>
+                        </table>
+                      </div>
+                    </div>
+                  </div>
+                  
+                  <div class="col-md-6">
+                    <div class="card">
+                      <div class="card-header">
+                        <h5 class="mb-0">风险评估</h5>
+                      </div>
+                      <div class="card-body">
+                        <div class="text-center mb-4">
+                          <div class="risk-meter">
+                            <div class="risk-indicator" 
+                                 :style="{ transform: `rotate(${currentRecordDetails.probability * 180}deg)` }"></div>
+                            <div class="risk-value">{{ (currentRecordDetails.probability * 100).toFixed(1) }}%</div>
+                          </div>
+                          
+                          <h4 class="mt-3">
+                            <span :class="`badge bg-${getRiskLevel(currentRecordDetails.probability).color}`">
+                              {{ getRiskLevel(currentRecordDetails.probability).level }}
+                            </span>
+                          </h4>
+                        </div>
+                        
+                        <h6 class="mb-2">模型分析详情:</h6>
+                        <div class="table-responsive">
+                          <table class="table table-sm">
+                            <thead>
+                              <tr>
+                                <th>模型</th>
+                                <th>风险概率</th>
+                              </tr>
+                            </thead>
+                            <tbody>
+                              <tr v-for="(result, model) in currentRecordDetails.model_details" :key="model">
+                                <td>{{ model }}</td>
+                                <td>{{ (result.probability * 100).toFixed(1) }}%</td>
+                              </tr>
+                            </tbody>
+                          </table>
+                        </div>
+                      </div>
+                    </div>
                   </div>
                 </div>
               </div>
@@ -169,22 +260,24 @@ onMounted(() => {
 
 <style scoped>
 .history-page {
-  background-color: #f8f9fa;
+  background-color: transparent;
   min-height: 100vh;
   padding-bottom: 2rem;
-}
-
-.nav-link {
-  cursor: pointer;
 }
 
 .card {
   box-shadow: 0 4px 6px rgba(0, 0, 0, 0.1);
   margin-bottom: 2rem;
+  background-color: rgba(30, 41, 59, 0.75);
+  backdrop-filter: blur(5px);
+  color: #fff;
+  border: 1px solid rgba(255, 255, 255, 0.1);
 }
 
 .card-header {
   font-weight: 600;
+  background-color: rgba(255, 255, 255, 0.1);
+  border-bottom: 1px solid rgba(255, 255, 255, 0.1);
 }
 
 .badge {
@@ -192,8 +285,54 @@ onMounted(() => {
   padding: 0.35em 0.65em;
 }
 
-.accordion-button:not(.collapsed) {
-  background-color: rgba(255, 193, 7, 0.1);
-  color: #212529;
+/* 风险评估样式 */
+.risk-meter {
+  position: relative;
+  width: 200px;
+  height: 100px;
+  margin: 0 auto;
+  background: conic-gradient(
+    from 180deg,
+    #28a745 0deg,
+    #ffc107 90deg,
+    #dc3545 180deg
+  );
+  border-top-left-radius: 100px;
+  border-top-right-radius: 100px;
+  overflow: hidden;
+}
+
+.risk-meter::after {
+  content: '';
+  position: absolute;
+  top: 5px;
+  left: 5px;
+  right: 5px;
+  bottom: 0;
+  background-color: rgba(30, 41, 59, 0.85);
+  border-top-left-radius: 100px;
+  border-top-right-radius: 100px;
+}
+
+.risk-indicator {
+  position: absolute;
+  bottom: -5px;
+  left: 50%;
+  width: 2px;
+  height: 60px;
+  background-color: #fff;
+  transform-origin: bottom center;
+  z-index: 10;
+  transition: transform 0.8s ease-out;
+}
+
+.risk-value {
+  position: absolute;
+  bottom: 10px;
+  left: 50%;
+  transform: translateX(-50%);
+  font-size: 1.5rem;
+  font-weight: bold;
+  z-index: 10;
 }
 </style> 

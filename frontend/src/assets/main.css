@@ -26,7 +26,7 @@ a {
 
 body {
   font-family: 'Nunito', -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, 'Helvetica Neue', Arial, sans-serif;
-  background-color: #f8f9fa;
+  background-color: #1e293b;
   scroll-behavior: smooth;
   overflow-x: hidden;
   margin: 0;
@@ -68,11 +68,15 @@ body {
   box-shadow: 0 4px 15px rgba(0, 0, 0, 0.05);
   transition: all 0.3s ease;
   overflow: hidden;
+  background-color: rgba(30, 41, 59, 0.75);
+  backdrop-filter: blur(5px);
+  color: #fff;
+  border: 1px solid rgba(255, 255, 255, 0.1);
 }
 
 .card-header {
-  background-color: #fff;
-  border-bottom: 1px solid rgba(0, 0, 0, 0.05);
+  background-color: rgba(255, 255, 255, 0.1);
+  border-bottom: 1px solid rgba(255, 255, 255, 0.1);
   padding: 1rem 1.5rem;
 }
 
@@ -84,18 +88,30 @@ body {
 .form-control, .form-select {
   border-radius: 8px;
   padding: 0.75rem 1rem;
-  border: 1px solid rgba(0, 0, 0, 0.1);
+  border: 1px solid rgba(255, 255, 255, 0.2);
   transition: all 0.3s ease;
+  background-color: rgba(255, 255, 255, 0.1);
+  color: #fff;
 }
 
 .form-control:focus, .form-select:focus {
   box-shadow: 0 0 0 3px rgba(78, 115, 223, 0.25);
   border-color: var(--primary-color);
-  }
+  background-color: rgba(255, 255, 255, 0.15);
+}
 
 .form-label {
   font-weight: 500;
   margin-bottom: 0.5rem;
+  color: #fff;
+}
+
+.form-control::placeholder {
+  color: rgba(255, 255, 255, 0.5);
+}
+
+.form-text {
+  color: rgba(255, 255, 255, 0.7);
 }
 
 /* 通用工具类 */
@@ -178,8 +194,8 @@ body {
   left: 0;
   right: 0;
   bottom: 0;
-  background-color: rgba(255, 255, 255, 0.7);
-    display: flex;
+  background-color: rgba(30, 41, 59, 0.7);
+  display: flex;
   align-items: center;
   justify-content: center;
   z-index: 9999;
@@ -188,7 +204,7 @@ body {
 .spinner {
   width: 40px;
   height: 40px;
-  border: 4px solid rgba(0, 0, 0, 0.1);
+  border: 4px solid rgba(255, 255, 255, 0.1);
   border-left-color: var(--primary-color);
   border-radius: 50%;
   animation: spin 1s linear infinite;
@@ -198,4 +214,59 @@ body {
   to {
     transform: rotate(360deg);
   }
+}
+
+/* 警告框样式 */
+.alert {
+  border-radius: 10px;
+  padding: 1rem 1.5rem;
+  margin-bottom: 1.5rem;
+  border: none;
+  backdrop-filter: blur(5px);
+}
+
+.alert-success {
+  background-color: rgba(28, 200, 138, 0.2);
+  color: #e6fffa;
+  border-left: 4px solid #1cc88a;
+}
+
+.alert-danger {
+  background-color: rgba(231, 74, 59, 0.2);
+  color: #fff5f5;
+  border-left: 4px solid #e74a3b;
+}
+
+.alert-warning {
+  background-color: rgba(246, 194, 62, 0.2);
+  color: #fff9e6;
+  border-left: 4px solid #f6c23e;
+}
+
+.alert-info {
+  background-color: rgba(54, 185, 204, 0.2);
+  color: #e6ffff;
+  border-left: 4px solid #36b9cc;
+}
+
+/* 表格样式 */
+.table {
+  color: #fff;
+}
+
+.table th, .table td {
+  border-color: rgba(255, 255, 255, 0.1);
+}
+
+.table-striped > tbody > tr:nth-of-type(odd) {
+  background-color: rgba(255, 255, 255, 0.05);
+}
+
+.table-hover > tbody > tr:hover {
+  background-color: rgba(255, 255, 255, 0.1);
+}
+
+.table-light {
+  background-color: rgba(255, 255, 255, 0.1);
+  color: #fff;
 }

@@ -426,7 +426,7 @@ function changePage(page: number) {
 
 <style scoped>
 .admin-users {
-  background-color: #f8f9fa;
+  background-color: transparent;
   min-height: 100vh;
   padding-bottom: 2rem;
 }

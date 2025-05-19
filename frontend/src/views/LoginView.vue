@@ -273,9 +273,6 @@ if (authStore.isAuthenticated) {
 
 <style scoped>
 .login-page {
-  background-image: url('@/assets/images/bg.jpg');
-  background-size: cover;
-  background-position: center;
   min-height: 100vh;
   display: flex;
   align-items: center;
@@ -283,52 +280,50 @@ if (authStore.isAuthenticated) {
   position: relative;
 }
 
-.login-page::before {
-  content: '';
-  position: absolute;
-  top: 0;
-  left: 0;
-  right: 0;
-  bottom: 0;
-  background-color: rgba(0, 0, 0, 0.6);
-}
-
 .auth-card {
-  background-color: rgba(255, 255, 255, 0.9);
+  background-color: rgba(30, 41, 59, 0.75);
   backdrop-filter: blur(10px);
   border: none;
   border-radius: 15px;
   box-shadow: 0 15px 35px rgba(0, 0, 0, 0.2);
   position: relative;
   overflow: hidden;
+  color: #fff;
+  border: 1px solid rgba(255, 255, 255, 0.1);
 }
 
 .card-header {
-  background-color: transparent;
-  border-bottom: 1px solid rgba(0, 0, 0, 0.1);
+  background-color: rgba(255, 255, 255, 0.1);
+  border-bottom: 1px solid rgba(255, 255, 255, 0.1);
 }
 
 .nav-tabs .nav-link {
-  color: #495057;
+  color: rgba(255, 255, 255, 0.7);
   border: none;
   font-weight: 500;
 }
 
 .nav-tabs .nav-link.active {
-  color: #007bff;
+  color: #fff;
   background-color: transparent;
-  border-bottom: 2px solid #007bff;
+  border-bottom: 2px solid #4e73df;
 }
 
 .form-control, .form-select {
-  background-color: rgba(255, 255, 255, 0.9);
-  border: 1px solid rgba(0, 0, 0, 0.1);
+  background-color: rgba(255, 255, 255, 0.1);
+  border: 1px solid rgba(255, 255, 255, 0.2);
   border-radius: 8px;
   padding: 12px 15px;
+  color: #fff;
+}
+
+.form-control::placeholder {
+  color: rgba(255, 255, 255, 0.5);
 }
 
 .form-control:focus, .form-select:focus {
-  box-shadow: 0 0 0 3px rgba(0, 123, 255, 0.25);
+  box-shadow: 0 0 0 3px rgba(78, 115, 223, 0.25);
+  background-color: rgba(255, 255, 255, 0.15);
 }
 
 .btn-primary {

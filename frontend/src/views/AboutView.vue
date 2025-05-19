@@ -1,6 +1,5 @@
 <template>
   <div class="about-page">
-    <div class="fixed-background"></div>
     <div class="container py-5">
       <div class="row justify-content-center">
         <div class="col-lg-10">
@@ -233,30 +232,6 @@
   position: relative;
   min-height: 100vh;
   color: #fff;
-}
-
-.fixed-background {
-  background-image: url('@/assets/images/bg.jpg');
-  background-size: cover;
-  background-position: center;
-  background-attachment: fixed;
-  position: fixed;
-  top: 0;
-  left: 0;
-  width: 100%;
-  height: 100%;
-  z-index: -2;
-}
-
-.fixed-background::after {
-  content: '';
-  position: fixed;
-  top: 0;
-  left: 0;
-  width: 100%;
-  height: 100%;
-  background-color: rgba(0, 0, 0, 0.6);
-  z-index: -1;
 }
 
 .about-card-main {

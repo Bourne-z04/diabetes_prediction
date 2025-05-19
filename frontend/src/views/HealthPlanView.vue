@@ -1,305 +1,563 @@
 <script setup lang="ts">
-import { ref, onMounted, reactive } from 'vue'
+import { ref, reactive, computed, watch, onMounted } from 'vue'
 import { useRouter } from 'vue-router'
 import { useAuthStore } from '@/stores/auth'
 import { api } from '@/services/api'
+import { aiService } from '@/services/ai'
+import MarkdownIt from 'markdown-it'
 
 const router = useRouter()
 const authStore = useAuthStore()
+const md = new MarkdownIt({ breaks: true })
 
 // 检查用户是否登录
 if (!authStore.isAuthenticated) {
   router.push('/login')
 }
 
-const user = authStore.user
 const loading = ref(false)
 const error = ref<string | null>(null)
+const generatingPlan = ref(false)
+const healthPlan = ref<any>(null)
 
-// 健康方案列表
-const healthPlans = ref([])
-
-// 当前选中的健康方案
-const selectedPlan = ref(null)
-
-// 初始化页面
-onMounted(async () => {
-  loading.value = true
-  try {
-    // 获取健康方案列表
-    const plansData = await api.healthPlan.getPlans()
-    healthPlans.value = plansData
-    
-    // 如果有健康方案，默认选中第一个
-    if (healthPlans.value.length > 0) {
-      selectedPlan.value = healthPlans.value[0]
-    }
-  } catch (err: any) {
-    error.value = err.message || '加载健康方案时发生错误'
-  } finally {
-    loading.value = false
-  }
+// 用户健康数据
+const healthData = reactive({
+  age: 30,
+  bmi: 22.5,
+  insulin: 120,
+  skin_thickness: 20,
+  glucose: 85,
+  diabetesRisk: 0.1
 })
 
-// 选择健康方案
-function selectPlan(plan) {
-  selectedPlan.value = plan
-}
+// 用户偏好设置
+const userPreferences = reactive({
+  dietPreference: '',
+  exercisePreference: '',
+  allergies: '',
+  medicalConditions: ''
+})
 
-// 创建新的健康方案（模拟）
-async function createNewPlan() {
-  loading.value = true
+// 当前选中的标签页
+const activeTab = ref('dietPlan')
+
+// 格式化的用户偏好
+const formattedPreferences = computed(() => {
+  const preferences = [];
+  
+  if (userPreferences.dietPreference) 
+    preferences.push(`饮食偏好: ${userPreferences.dietPreference}`);
+  
+  if (userPreferences.exercisePreference) 
+    preferences.push(`运动偏好: ${userPreferences.exercisePreference}`);
+  
+  if (userPreferences.allergies) 
+    preferences.push(`过敏信息: ${userPreferences.allergies}`);
+  
+  if (userPreferences.medicalConditions) 
+    preferences.push(`其他健康状况: ${userPreferences.medicalConditions}`);
+  
+  return preferences.join('; ');
+})
+
+// 加载最新健康数据
+async function loadHealthData() {
+  loading.value = true;
   try {
-    const newPlan = {
-      id: Date.now().toString(),
-      title: '个性化健康方案 ' + new Date().toLocaleDateString(),
-      created_at: new Date().toISOString(),
-      status: 'active',
-      dietPlan: {
-        meals: [
-          { name: '早餐', description: '全麦面包两片，煮鸡蛋一个，脱脂牛奶200ml', calories: 300 },
-          { name: '上午加餐', description: '苹果一个或低糖酸奶一杯', calories: 100 },
-          { name: '午餐', description: '糙米饭半碗，清蒸鱼100g，清炒时蔬200g', calories: 400 },
-          { name: '下午加餐', description: '坚果一小把（约15g）', calories: 100 },
-          { name: '晚餐', description: '燕麦粥一碗，煮鸡胸肉100g，凉拌蔬菜200g', calories: 350 }
-        ],
-        recommendations: [
-          '控制总热量摄入，每日保持在1200-1500千卡',
-          '增加膳食纤维摄入，选择低GI食物',
-          '少量多餐，定时定量',
-          '限制精制糖和淀粉的摄入',
-          '保持足够的蛋白质摄入'
-        ]
-      },
-      exercisePlan: {
-        activities: [
-          { name: '快走', duration: '30分钟', frequency: '每天', intensity: '中等', calories: 150 },
-          { name: '力量训练', duration: '20分钟', frequency: '每周3次', intensity: '中等', calories: 120 },
-          { name: '伸展运动', duration: '15分钟', frequency: '每天', intensity: '低', calories: 50 }
-        ],
-        recommendations: [
-          '运动前后测量血糖',
-          '适当控制运动强度，避免过度运动',
-          '运动前准备好糖果或含糖饮料，预防低血糖',
-          '坚持有氧运动和力量训练相结合',
-          '选择自己喜欢的运动方式，保持长期坚持'
-        ]
-      },
-      lifestyleTips: [
-        '保持规律作息，每晚保证7-8小时睡眠',
-        '学习压力管理技巧，如冥想、深呼吸等',
-        '定期监测血糖，记录变化',
-        '戒烟限酒',
-        '保持积极乐观的心态'
-      ]
+    const records = await api.user.getHealthRecords();
+    if (records && records.length > 0) {
+      const latestRecord = records[0];
+      
+      // 更新健康数据
+      if (latestRecord.health_info) {
+        healthData.age = latestRecord.health_info.age;
+        healthData.bmi = latestRecord.health_info.bmi;
+        healthData.insulin = latestRecord.health_info.insulin;
+        healthData.skin_thickness = latestRecord.health_info.skin_thickness;
+        healthData.glucose = latestRecord.health_info.glucose;
+      }
+      
+      // 更新风险值
+      if (latestRecord.probability !== undefined) {
+        healthData.diabetesRisk = latestRecord.probability;
+      }
     }
-    
-    // 模拟API调用
-    await new Promise(resolve => setTimeout(resolve, 1000))
-    
-    // 添加到列表
-    healthPlans.value.unshift(newPlan)
-    selectedPlan.value = newPlan
-    
-    return newPlan
-  } catch (err: any) {
-    error.value = err.message || '创建健康方案时发生错误'
-    throw err
+  } catch (err) {
+    console.error('加载健康数据失败:', err);
+    error.value = '无法加载您的健康数据。请稍后再试或手动输入数据。';
   } finally {
-    loading.value = false
+    loading.value = false;
   }
 }
+
+// 生成健康方案
+async function generateHealthPlan() {
+  generatingPlan.value = true;
+  error.value = null;
+  
+  try {
+    const response = await aiService.generateHealthPlan({
+      ...healthData,
+      userPreferences: formattedPreferences.value
+    });
+    
+    if (response && response.choices && response.choices.length > 0) {
+      const aiResponse = response.choices[0].message.content;
+      
+      // 解析AI回复，将其分为多个部分
+      const sections = parseResponseIntoSections(aiResponse);
+      healthPlan.value = sections;
+    } else {
+      throw new Error('生成健康方案失败，请稍后再试');
+    }
+  } catch (err: any) {
+    console.error('生成健康方案错误:', err);
+    error.value = err.message || '生成健康方案失败，请稍后再试';
+  } finally {
+    generatingPlan.value = false;
+  }
+}
+
+// 解析AI回复，将其分为多个部分
+function parseResponseIntoSections(response: string) {
+  // 这是一个简单的解析方法，可能需要根据实际AI回复格式进行调整
+  const sections: Record<string, string> = {
+    dietPlan: '',
+    exercisePlan: '',
+    lifestyleAdjustments: '',
+    regularChecks: '',
+    riskSignals: '',
+    other: ''
+  };
+  
+  // 分割文本为行
+  const lines = response.split('\n');
+  let currentSection = 'other';
+  
+  for (const line of lines) {
+    const trimmedLine = line.trim();
+    
+    // 根据关键词确定当前部分
+    if (trimmedLine.match(/^1[\.\s]|饮食|饮食方案|饮食建议|饮食计划/i)) {
+      currentSection = 'dietPlan';
+      sections[currentSection] += trimmedLine + '\n';
+    } else if (trimmedLine.match(/^2[\.\s]|运动|运动计划|运动建议|锻炼/i)) {
+      currentSection = 'exercisePlan';
+      sections[currentSection] += trimmedLine + '\n';
+    } else if (trimmedLine.match(/^3[\.\s]|生活习惯|习惯|生活方式|生活调整/i)) {
+      currentSection = 'lifestyleAdjustments';
+      sections[currentSection] += trimmedLine + '\n';
+    } else if (trimmedLine.match(/^4[\.\s]|检测|检查|监测|定期检测/i)) {
+      currentSection = 'regularChecks';
+      sections[currentSection] += trimmedLine + '\n';
+    } else if (trimmedLine.match(/^5[\.\s]|风险|注意|警示|信号|症状/i)) {
+      currentSection = 'riskSignals';
+      sections[currentSection] += trimmedLine + '\n';
+    } else {
+      sections[currentSection] += trimmedLine + '\n';
+    }
+  }
+  
+  return sections;
+}
+
+// 导出健康方案
+function exportHealthPlan() {
+  if (!healthPlan.value) return;
+  
+  // 将所有部分合并为一个字符串
+  let content = `# 个性化糖尿病健康管理方案\n\n`;
+  content += `## 用户数据\n`;
+  content += `- 年龄: ${healthData.age}岁\n`;
+  content += `- BMI指数: ${healthData.bmi}\n`;
+  content += `- 胰岛素水平: ${healthData.insulin} μU/ml\n`;
+  content += `- 皮肤厚度: ${healthData.skin_thickness} mm\n`;
+  content += `- 血糖水平: ${healthData.glucose} mg/dL\n`;
+  content += `- 糖尿病风险评估: ${(healthData.diabetesRisk * 100).toFixed(1)}%\n\n`;
+  
+  if (formattedPreferences.value) {
+    content += `## 用户偏好\n${formattedPreferences.value}\n\n`;
+  }
+  
+  if (healthPlan.value.dietPlan) {
+    content += `## 饮食方案\n${healthPlan.value.dietPlan}\n\n`;
+  }
+  
+  if (healthPlan.value.exercisePlan) {
+    content += `## 运动计划\n${healthPlan.value.exercisePlan}\n\n`;
+  }
+  
+  if (healthPlan.value.lifestyleAdjustments) {
+    content += `## 生活习惯调整\n${healthPlan.value.lifestyleAdjustments}\n\n`;
+  }
+  
+  if (healthPlan.value.regularChecks) {
+    content += `## 定期检测建议\n${healthPlan.value.regularChecks}\n\n`;
+  }
+  
+  if (healthPlan.value.riskSignals) {
+    content += `## 需注意的风险信号\n${healthPlan.value.riskSignals}\n\n`;
+  }
+  
+  if (healthPlan.value.other) {
+    content += `## 其他建议\n${healthPlan.value.other}\n\n`;
+  }
+  
+  content += `生成日期: ${new Date().toLocaleDateString()}\n`;
+  
+  // 创建一个下载链接
+  const blob = new Blob([content], { type: 'text/plain' });
+  const url = URL.createObjectURL(blob);
+  const a = document.createElement('a');
+  a.href = url;
+  a.download = `健康管理方案_${new Date().toISOString().slice(0, 10)}.md`;
+  document.body.appendChild(a);
+  a.click();
+  document.body.removeChild(a);
+  URL.revokeObjectURL(url);
+}
+
+// 监听预览窗口的创建和解析
+const showPreview = ref(false)
+const previewContent = ref('')
+
+function togglePreview() {
+  showPreview.value = !showPreview.value
+  
+  if (showPreview.value) {
+    let preview = `# 个性化糖尿病健康管理方案\n\n`;
+    
+    // 添加用户信息
+    preview += `## 用户健康数据\n`;
+    preview += `- **年龄:** ${healthData.age}岁\n`;
+    preview += `- **BMI指数:** ${healthData.bmi}\n`;
+    preview += `- **胰岛素水平:** ${healthData.insulin} μU/ml\n`;
+    preview += `- **皮肤厚度:** ${healthData.skin_thickness} mm\n`;
+    preview += `- **血糖水平:** ${healthData.glucose} mg/dL\n`;
+    preview += `- **糖尿病风险评估:** ${(healthData.diabetesRisk * 100).toFixed(1)}%\n\n`;
+    
+    // 添加用户偏好
+    if (formattedPreferences.value) {
+      preview += `## 用户偏好\n`;
+      preview += formattedPreferences.value.split('; ').map(pref => `- ${pref}`).join('\n');
+      preview += `\n\n`;
+    }
+    
+    previewContent.value = preview;
+  }
+}
+
+// 页面加载时获取健康数据
+onMounted(async () => {
+  await loadHealthData();
+})
 </script>
 
 <template>
   <div class="health-plan-page">
     <div class="container py-4">
-      <h1 class="mb-4">健康方案</h1>
+      <h1 class="mb-4">个性化健康管理方案</h1>
       
       <div v-if="loading" class="text-center my-5">
         <div class="spinner-border text-primary" role="status">
           <span class="visually-hidden">加载中...</span>
         </div>
-        <p class="mt-2">加载数据中...</p>
+        <p class="mt-2">加载健康数据中...</p>
       </div>
       
       <div v-else-if="error" class="alert alert-danger my-4">
         {{ error }}
       </div>
       
-      <template v-else>
-        <div class="row">
-          <!-- 左侧健康方案列表 -->
-          <div class="col-md-4 mb-4">
-            <div class="card">
-              <div class="card-header d-flex justify-content-between align-items-center">
-                <h5 class="mb-0">我的健康方案</h5>
-                <button class="btn btn-sm btn-primary" @click="createNewPlan" :disabled="loading">
-                  <i class="fas fa-plus me-1"></i> 新方案
-                </button>
+      <div v-else>
+        <div class="row g-4 mb-4">
+          <!-- 健康数据表单 -->
+          <div class="col-lg-6">
+            <div class="card h-100">
+              <div class="card-header">
+                <h5 class="mb-0">您的健康数据</h5>
               </div>
-              <div class="card-body p-0">
-                <div v-if="healthPlans.length === 0" class="p-3 text-center text-muted">
-                  <p>暂无健康方案</p>
-                  <button class="btn btn-primary" @click="createNewPlan">
-                    <i class="fas fa-plus me-1"></i> 创建第一个方案
-                  </button>
+              <div class="card-body">
+                <p class="mb-3">
+                  已从您最近的记录中自动导入数据，您可以根据需要进行调整。
+                </p>
+                
+                <div class="mb-3">
+                  <label for="age" class="form-label">年龄</label>
+                  <input type="number" id="age" class="form-control" v-model="healthData.age" min="1" max="120" placeholder="例如：35">
                 </div>
-                <ul v-else class="list-group list-group-flush plan-list">
-                  <li v-for="plan in healthPlans" :key="plan.id" 
-                      class="list-group-item list-group-item-action d-flex align-items-center"
-                      :class="{ active: selectedPlan && selectedPlan.id === plan.id }"
-                      @click="selectPlan(plan)">
-                    <div>
-                      <h6 class="mb-1">{{ plan.title }}</h6>
-                      <small>创建于 {{ new Date(plan.created_at).toLocaleDateString() }}</small>
-                      <span class="badge" 
-                            :class="plan.status === 'active' ? 'bg-success' : 'bg-secondary'">
-                        {{ plan.status === 'active' ? '进行中' : '已完成' }}
-                      </span>
-                    </div>
-                    <i class="fas fa-chevron-right ms-auto"></i>
-                  </li>
-                </ul>
+                
+                <div class="mb-3">
+                  <label for="bmi" class="form-label">BMI (体重指数)</label>
+                  <input type="number" id="bmi" class="form-control" v-model="healthData.bmi" step="0.1" min="10" max="50" placeholder="例如：24.5">
+                  <div class="form-text">体重(kg) / 身高²(m)</div>
+                </div>
+                
+                <div class="mb-3">
+                  <label for="insulin" class="form-label">胰岛素水平 (μU/ml)</label>
+                  <input type="number" id="insulin" class="form-control" v-model="healthData.insulin" min="0" max="1000" placeholder="例如：15 (空腹) 或 50-150 (餐后)">
+                </div>
+                
+                <div class="mb-3">
+                  <label for="skin_thickness" class="form-label">皮肤厚度 (mm)</label>
+                  <input type="number" id="skin_thickness" class="form-control" v-model="healthData.skin_thickness" min="0" max="100" placeholder="例如：20">
+                </div>
+                
+                <div class="mb-3">
+                  <label for="glucose" class="form-label">血糖水平 (mg/dL)</label>
+                  <input type="number" id="glucose" class="form-control" v-model="healthData.glucose" min="50" max="500" placeholder="例如：90 (空腹) 或 <140 (餐后2小时)">
+                  <div class="form-text">参考范围：空腹 70-100 mg/dL, 餐后两小时 &lt;140 mg/dL</div>
+                </div>
+                
+                <div class="mb-3">
+                  <label for="diabetes_risk" class="form-label">糖尿病风险评估</label>
+                  <div class="input-group">
+                    <input type="number" id="diabetes_risk" class="form-control" v-model="healthData.diabetesRisk" step="0.01" min="0" max="1">
+                    <span class="input-group-text">{{ (healthData.diabetesRisk * 100).toFixed(1) }}%</span>
+                  </div>
+                  <div class="form-text">此数值来自您的预测结果</div>
+                </div>
               </div>
             </div>
           </div>
           
-          <!-- 右侧方案详情 -->
-          <div class="col-md-8">
-            <div v-if="!selectedPlan" class="card">
-              <div class="card-body text-center py-5">
-                <i class="fas fa-clipboard-list text-muted mb-3" style="font-size: 3rem;"></i>
-                <h4>请选择一个健康方案</h4>
-                <p class="text-muted">或者创建一个新的健康方案</p>
-                <button class="btn btn-primary" @click="createNewPlan">
-                  <i class="fas fa-plus me-1"></i> 创建新方案
+          <!-- 个人偏好表单 -->
+          <div class="col-lg-6">
+            <div class="card h-100">
+              <div class="card-header d-flex justify-content-between align-items-center">
+                <h5 class="mb-0">个人偏好设置</h5>
+                <button class="btn btn-sm btn-outline-primary" @click="togglePreview">
+                  <i class="bi" :class="showPreview ? 'bi-eye-slash' : 'bi-eye'"></i>
+                  {{ showPreview ? '隐藏预览' : '预览' }}
                 </button>
               </div>
-            </div>
-            
-            <div v-else>
-              <div class="card mb-4">
-                <div class="card-header">
-                  <h4 class="mb-0">{{ selectedPlan.title }}</h4>
-                </div>
-                <div class="card-body">
-                  <h5><i class="fas fa-utensils me-2"></i>饮食计划</h5>
-                  <div class="table-responsive mb-4">
-                    <table class="table table-bordered">
-                      <thead>
-                        <tr>
-                          <th>餐次</th>
-                          <th>食物建议</th>
-                          <th>热量(大约)</th>
-                        </tr>
-                      </thead>
-                      <tbody>
-                        <tr v-for="meal in selectedPlan.dietPlan.meals" :key="meal.name">
-                          <td><strong>{{ meal.name }}</strong></td>
-                          <td>{{ meal.description }}</td>
-                          <td>{{ meal.calories }} 千卡</td>
-                        </tr>
-                      </tbody>
-                    </table>
+              <div class="card-body">
+                <div v-if="!showPreview">
+                  <p class="mb-3">
+                    您的偏好设置将帮助我们生成更加个性化的健康方案。
+                  </p>
+                  
+                  <div class="mb-3">
+                    <label for="diet-preference" class="form-label">饮食偏好</label>
+                    <select class="form-select" id="diet-preference" v-model="userPreferences.dietPreference">
+                      <option value="">请选择...</option>
+                      <option value="普通饮食">普通饮食</option>
+                      <option value="素食">素食</option>
+                      <option value="低碳水饮食">低碳水饮食</option>
+                      <option value="地中海饮食">地中海饮食</option>
+                      <option value="低脂饮食">低脂饮食</option>
+                      <option value="间歇性断食">间歇性断食</option>
+                    </select>
                   </div>
                   
-                  <h6>饮食建议:</h6>
-                  <ul>
-                    <li v-for="(rec, index) in selectedPlan.dietPlan.recommendations" :key="index">
-                      {{ rec }}
-                    </li>
-                  </ul>
-                  
-                  <hr class="my-4">
-                  
-                  <h5><i class="fas fa-running me-2"></i>运动计划</h5>
-                  <div class="table-responsive mb-4">
-                    <table class="table table-bordered">
-                      <thead>
-                        <tr>
-                          <th>活动</th>
-                          <th>时长</th>
-                          <th>频率</th>
-                          <th>强度</th>
-                          <th>消耗热量(约)</th>
-                        </tr>
-                      </thead>
-                      <tbody>
-                        <tr v-for="activity in selectedPlan.exercisePlan.activities" :key="activity.name">
-                          <td><strong>{{ activity.name }}</strong></td>
-                          <td>{{ activity.duration }}</td>
-                          <td>{{ activity.frequency }}</td>
-                          <td>{{ activity.intensity }}</td>
-                          <td>{{ activity.calories }} 千卡</td>
-                        </tr>
-                      </tbody>
-                    </table>
+                  <div class="mb-3">
+                    <label for="exercise-preference" class="form-label">运动偏好</label>
+                    <select class="form-select" id="exercise-preference" v-model="userPreferences.exercisePreference">
+                      <option value="">请选择...</option>
+                      <option value="步行/散步">步行/散步</option>
+                      <option value="跑步">跑步</option>
+                      <option value="游泳">游泳</option>
+                      <option value="骑行">骑行</option>
+                      <option value="瑜伽">瑜伽</option>
+                      <option value="力量训练">力量训练</option>
+                      <option value="团体运动">团体运动</option>
+                      <option value="家庭锻炼">家庭锻炼</option>
+                      <option value="有行动障碍">有行动障碍</option>
+                    </select>
                   </div>
                   
-                  <h6>运动建议:</h6>
-                  <ul>
-                    <li v-for="(rec, index) in selectedPlan.exercisePlan.recommendations" :key="index">
-                      {{ rec }}
-                    </li>
-                  </ul>
+                  <div class="mb-3">
+                    <label for="allergies" class="form-label">食物过敏或不耐受</label>
+                    <input type="text" id="allergies" class="form-control" v-model="userPreferences.allergies" 
+                          placeholder="例如：海鲜、牛奶、小麦等">
+                  </div>
                   
-                  <hr class="my-4">
-                  
-                  <h5><i class="fas fa-heart me-2"></i>生活方式建议</h5>
-                  <ul>
-                    <li v-for="(tip, index) in selectedPlan.lifestyleTips" :key="index">
-                      {{ tip }}
-                    </li>
-                  </ul>
-                </div>
-                <div class="card-footer">
-                  <div class="d-flex justify-content-between">
-                    <button class="btn btn-outline-primary">
-                      <i class="fas fa-download me-1"></i> 导出PDF
-                    </button>
-                    <button class="btn btn-outline-secondary">
-                      <i class="fas fa-edit me-1"></i> 调整方案
-                    </button>
+                  <div class="mb-3">
+                    <label for="medical-conditions" class="form-label">其他健康状况</label>
+                    <textarea id="medical-conditions" class="form-control" rows="3" 
+                          v-model="userPreferences.medicalConditions"
+                          placeholder="例如：高血压、心脏病、肾脏问题等"></textarea>
                   </div>
                 </div>
+                
+                <div v-else class="preview-window">
+                  <div class="markdown-preview" v-html="md.render(previewContent)"></div>
+                </div>
+              </div>
+              
+              <div class="card-footer">
+                <button class="btn btn-primary w-100" @click="generateHealthPlan" :disabled="generatingPlan">
+                  <span v-if="generatingPlan" class="spinner-border spinner-border-sm me-2" role="status"></span>
+                  {{ generatingPlan ? '正在生成方案...' : '生成个性化健康方案' }}
+                </button>
               </div>
             </div>
           </div>
         </div>
-      </template>
+        
+        <!-- 健康方案结果 -->
+        <div v-if="healthPlan" class="health-plan-result">
+          <div class="card mb-4">
+            <div class="card-header">
+              <div class="d-flex justify-content-between align-items-center">
+                <h5 class="mb-0">您的个性化健康管理方案</h5>
+                <button class="btn btn-sm btn-success" @click="exportHealthPlan">
+                  <i class="bi bi-download me-1"></i> 导出方案
+                </button>
+              </div>
+              
+              <ul class="nav nav-tabs card-header-tabs mt-3">
+                <li class="nav-item">
+                  <a class="nav-link" :class="{ active: activeTab === 'dietPlan' }" 
+                     href="#" @click.prevent="activeTab = 'dietPlan'">
+                    <i class="bi bi-cup-hot me-1"></i> 饮食方案
+                  </a>
+                </li>
+                <li class="nav-item">
+                  <a class="nav-link" :class="{ active: activeTab === 'exercisePlan' }" 
+                     href="#" @click.prevent="activeTab = 'exercisePlan'">
+                    <i class="bi bi-activity me-1"></i> 运动计划
+                  </a>
+                </li>
+                <li class="nav-item">
+                  <a class="nav-link" :class="{ active: activeTab === 'lifestyleAdjustments' }" 
+                     href="#" @click.prevent="activeTab = 'lifestyleAdjustments'">
+                    <i class="bi bi-calendar2-check me-1"></i> 生活习惯
+                  </a>
+                </li>
+                <li class="nav-item">
+                  <a class="nav-link" :class="{ active: activeTab === 'regularChecks' }" 
+                     href="#" @click.prevent="activeTab = 'regularChecks'">
+                    <i class="bi bi-clipboard2-pulse me-1"></i> 定期检测
+                  </a>
+                </li>
+                <li class="nav-item">
+                  <a class="nav-link" :class="{ active: activeTab === 'riskSignals' }" 
+                     href="#" @click.prevent="activeTab = 'riskSignals'">
+                    <i class="bi bi-exclamation-triangle me-1"></i> 风险信号
+                  </a>
+                </li>
+              </ul>
+            </div>
+            
+            <div class="card-body">
+              <div v-if="activeTab === 'dietPlan'" class="plan-section">
+                <div class="markdown-content" v-html="md.render(healthPlan.dietPlan || '暂无饮食建议')"></div>
+              </div>
+              
+              <div v-if="activeTab === 'exercisePlan'" class="plan-section">
+                <div class="markdown-content" v-html="md.render(healthPlan.exercisePlan || '暂无运动建议')"></div>
+              </div>
+              
+              <div v-if="activeTab === 'lifestyleAdjustments'" class="plan-section">
+                <div class="markdown-content" v-html="md.render(healthPlan.lifestyleAdjustments || '暂无生活习惯调整建议')"></div>
+              </div>
+              
+              <div v-if="activeTab === 'regularChecks'" class="plan-section">
+                <div class="markdown-content" v-html="md.render(healthPlan.regularChecks || '暂无定期检测建议')"></div>
+              </div>
+              
+              <div v-if="activeTab === 'riskSignals'" class="plan-section">
+                <div class="markdown-content" v-html="md.render(healthPlan.riskSignals || '暂无风险信号提示')"></div>
+              </div>
+            </div>
+          </div>
+        </div>
+      </div>
     </div>
   </div>
 </template>
 
 <style scoped>
 .health-plan-page {
-  background-color: #f8f9fa;
+  background-color: transparent;
   min-height: 100vh;
   padding-bottom: 2rem;
 }
 
-.plan-list .list-group-item {
-  cursor: pointer;
-  transition: all 0.2s ease;
-  border-left: 3px solid transparent;
+.card {
+  box-shadow: 0 0.5rem 1rem rgba(0, 0, 0, 0.15);
+  border: none;
+  border-radius: 0.5rem;
+  overflow: hidden;
+  background-color: rgba(30, 41, 59, 0.75);
+  backdrop-filter: blur(5px);
+  color: #fff;
+  border: 1px solid rgba(255, 255, 255, 0.1);
 }
 
-.plan-list .list-group-item:hover {
-  background-color: #f8f9fa;
+.card-header {
+  background-color: rgba(255, 255, 255, 0.1);
+  border-bottom: 1px solid rgba(255, 255, 255, 0.1);
+  padding: 1rem;
 }
 
-.plan-list .list-group-item.active {
-  background-color: rgba(78, 115, 223, 0.1);
-  color: #4e73df;
-  border-left: 3px solid #4e73df;
+.preview-window {
+  background-color: rgba(30, 41, 59, 0.5);
+  border-radius: 0.25rem;
+  padding: 1rem;
+  height: 350px;
+  overflow-y: auto;
+  color: #fff;
 }
 
-.table th {
-  background-color: #f8f9fa;
+.markdown-preview {
+  font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
 }
 
-.badge {
-  margin-left: 0.5rem;
+.markdown-content {
+  line-height: 1.6;
+}
+
+.markdown-content :deep(h1) {
+  font-size: 1.5rem;
+  margin-bottom: 1rem;
+  color: #0d6efd;
+}
+
+.markdown-content :deep(h2) {
+  font-size: 1.3rem;
+  margin-bottom: 0.75rem;
+  color: #0d6efd;
+}
+
+.markdown-content :deep(h3) {
+  font-size: 1.1rem;
+  margin-bottom: 0.5rem;
+  color: #0d6efd;
+}
+
+.markdown-content :deep(ul) {
+  padding-left: 1.5rem;
+}
+
+.markdown-content :deep(li) {
+  margin-bottom: 0.25rem;
+}
+
+.markdown-content :deep(p) {
+  margin-bottom: 0.75rem;
+}
+
+.plan-section {
+  padding: 1rem;
+}
+
+.nav-tabs .nav-link {
+  color: #495057;
+}
+
+.nav-tabs .nav-link.active {
+  color: #0d6efd;
+  font-weight: 500;
+}
+
+.form-select option {
+  color: #212529; /* Bootstrap's default dark text color */
+  background-color: #fff; /* Ensure background is white */
+}
+
+.card-body .form-text {
+  color: rgba(255, 255, 255, 0.85); /* Brighter hint text for dark cards */
 }
 </style> 

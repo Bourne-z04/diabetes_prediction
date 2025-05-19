@@ -192,7 +192,7 @@ function handleSubmit() {
           <div class="card user-profile-card">
             <div class="card-body text-center">
               <div class="profile-avatar">
-                <i class="fas fa-user-circle"></i>
+                <img src="@/assets/images/logo.jpg" alt="User Avatar" class="img-fluid rounded-circle" style="width: 120px; height: 120px; object-fit: cover;">
               </div>
               <h4 class="mt-3">{{ user?.username }}</h4>
               <p class="text-muted">{{ user?.email }}</p>
@@ -232,9 +232,23 @@ function handleSubmit() {
 
 <style scoped>
 .profile-page {
-  background-color: #f8f9fa;
+  background-color: transparent;
   min-height: 100vh;
   padding-bottom: 2rem;
+}
+
+.card {
+  background-color: rgba(30, 41, 59, 0.75);
+  backdrop-filter: blur(5px);
+  color: #fff;
+  border: 1px solid rgba(255, 255, 255, 0.1);
+  box-shadow: 0 0.5rem 1rem rgba(0, 0, 0, 0.15);
+  border-radius: 0.5rem;
+}
+
+.card-header {
+  background-color: rgba(255, 255, 255, 0.1);
+  border-bottom: 1px solid rgba(255, 255, 255, 0.1);
 }
 
 .profile-avatar {
@@ -260,5 +274,9 @@ function handleSubmit() {
 .user-profile-card {
   position: sticky;
   top: 2rem;
+}
+
+.text-muted {
+  color: rgba(255, 255, 255, 0.7) !important;
 }
 </style> 
