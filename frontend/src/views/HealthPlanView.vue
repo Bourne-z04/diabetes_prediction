@@ -533,10 +533,12 @@ onMounted(async () => {
 
 .markdown-content :deep(li) {
   margin-bottom: 0.25rem;
+  color: #f8f9fa;
 }
 
 .markdown-content :deep(p) {
   margin-bottom: 0.75rem;
+  color: #f8f9fa;
 }
 
 .plan-section {
