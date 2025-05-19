@@ -294,7 +294,7 @@ function scrollToRoles() {
         <i class="call-to-action-icon bi bi-play-circle-fill mb-4"></i>
         <h2 class="mb-4">立即开始使用</h2>
         <p class="mb-4">注册账号，开始您的个性化健康管理之旅</p>
-        <p class="text-muted mb-4">系统会根据您的糖尿病类型、运动量和健康数据，为您量身定制健康方案</p>
+        <p class="text-white mb-4">系统会根据您的糖尿病类型、运动量和健康数据，为您量身定制健康方案</p>
         <router-link to="/login" class="btn btn-primary btn-lg">
           <i class="bi bi-person-plus-fill me-2"></i>立即登录/注册
         </router-link>

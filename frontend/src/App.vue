@@ -26,7 +26,7 @@ const userNavItems = [
 const adminNavItems = [
   { name: '首页', path: '/', icon: 'bi bi-house-door' },
   { name: '仪表盘', path: '/admin/dashboard', icon: 'bi bi-speedometer2' },
-  { name: '用户管理', path: '/admin/users', icon: 'bi bi-people-gear' },
+  { name: '用户管理', path: '/admin/users', icon: 'bi bi-people' },
   { name: '数据上传', path: '/admin/data-upload', icon: 'bi bi-cloud-upload' },
   { name: '数据可视化', path: '/admin/visualization', icon: 'bi bi-graph-up' }
 ]

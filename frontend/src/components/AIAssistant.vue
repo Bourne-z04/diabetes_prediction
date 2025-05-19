@@ -215,7 +215,8 @@ function scrollToBottom() {
   bottom: 90px;
   right: 20px;
   width: 350px;
-  height: 500px;
+  height: 70vh;
+  max-height: 700px;
   background-color: rgba(30, 41, 59, 0.85);
   backdrop-filter: blur(10px);
   border-radius: 10px;
@@ -261,7 +262,7 @@ function scrollToBottom() {
 }
 
 .message {
-  margin-bottom: 15px;
+  margin-bottom: 20px;
   max-width: 80%;
   clear: both;
 }
@@ -275,7 +276,7 @@ function scrollToBottom() {
 }
 
 .message-content {
-  padding: 10px 15px;
+  padding: 8px 15px;
   border-radius: 15px;
   box-shadow: 0 1px 2px rgba(0, 0, 0, 0.1);
   word-wrap: break-word;
