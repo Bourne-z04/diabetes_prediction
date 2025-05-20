@@ -1,0 +1,284 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>糖尿病预测系统架构图</title>
+    <script src="https://cdn.jsdelivr.net/npm/mermaid@10/dist/mermaid.min.js"></script>
+    <style>
+        body {
+            font-family: Arial, sans-serif;
+            margin: 20px;
+            background-color: #f5f5f5;
+        }
+        .container {
+            max-width: 1200px;
+            margin: 0 auto;
+            background-color: white;
+            padding: 20px;
+            border-radius: 5px;
+            box-shadow: 0 0 10px rgba(0,0,0,0.1);
+        }
+        h1, h2 {
+            color: #333;
+        }
+        .diagram {
+            margin: 30px 0;
+            padding: 20px;
+            background-color: white;
+            border: 1px solid #ddd;
+            border-radius: 5px;
+        }
+        .mermaid {
+            display: flex;
+            justify-content: center;
+        }
+    </style>
+</head>
+<body>
+    <div class="container">
+        <h1>糖尿病预测系统架构图</h1>
+        
+        <div class="diagram">
+            <h2>技术框架层级图</h2>
+            <div class="mermaid">
+graph TD
+    %% 定义主要层级
+    subgraph 表示层
+        F[前端 Vue.js + TypeScript]
+        UI[UI组件库]
+        Router[Vue Router]
+        StateManagement[状态管理]
+    end
+    
+    subgraph 通信层
+        REST[HTTP/RESTful API]
+        JWT[JWT认证]
+        CORS[跨域资源共享]
+        Nginx[Nginx反向代理]
+    end
+    
+    subgraph 数据处理层
+        Flask[Flask Web框架]
+        subgraph 业务逻辑
+            Auth[用户认证与授权]
+            HealthData[健康数据管理]
+            Feedback[反馈系统]
+        end
+        subgraph 数据科学
+            DataClean[数据清洗]
+            FeatureEng[特征工程]
+            Cluster[聚类分析]
+            ML[机器学习模型]
+            Eval[模型评估]
+        end
+        AI[AI聊天助手]
+    end
+    
+    subgraph 持久层
+        ORM[SQLAlchemy]
+        Migration[Alembic]
+    end
+    
+    subgraph 数据存储层
+        MySQL[MySQL 8.0]
+        FileStorage[文件存储]
+    end
+    
+    subgraph 部署架构
+        Docker[Docker]
+        DockerCompose[Docker Compose]
+        Services[微服务组件]
+    end
+    
+    %% 定义层级间关系
+    F --> REST
+    REST --> Flask
+    Flask --> ORM
+    ORM --> MySQL
+    
+    %% 聚类和机器学习模型
+    Cluster --> |KMeans|ML
+    Cluster --> |DBSCAN|ML
+    Cluster --> |层次聚类|ML
+    
+    ML --> |随机森林|Eval
+    ML --> |逻辑回归|Eval
+    ML --> |SVM|Eval
+    
+    %% 部署关系
+    DockerCompose --> Docker
+    Docker --> Services
+            </div>
+        </div>
+        
+        <div class="diagram">
+            <h2>C4架构模型图</h2>
+            <div class="mermaid">
+flowchart TD
+    %% 定义主要组件
+    User((用户))
+    Admin((管理员))
+    
+    subgraph 前端应用[前端应用 Vue.js]
+        UI[用户界面]
+        RouteManagement[路由管理]
+        StateManagement[状态管理]
+    end
+    
+    subgraph 后端服务[后端服务 Flask]
+        API[RESTful API]
+        AuthService[认证服务]
+        HealthService[健康数据服务]
+        PredictionService[预测服务]
+        DataProcessing[数据处理服务]
+        AIService[AI聊天服务]
+    end
+    
+    subgraph ML[机器学习流水线]
+        DataClean[数据清洗]
+        FeatureEng[特征工程]
+        Cluster[聚类分析]
+        Training[模型训练]
+        Evaluation[模型评估]
+    end
+    
+    subgraph 数据存储[数据存储层]
+        MySQL[(MySQL数据库)]
+        FileSystem[(文件存储)]
+    end
+    
+    DeepSeekAPI[DeepSeek API]
+    
+    %% 关系定义
+    User --> UI
+    Admin --> UI
+    UI --> RouteManagement
+    RouteManagement --> API
+    
+    API --> AuthService
+    API --> HealthService
+    API --> PredictionService
+    API --> DataProcessing
+    API --> AIService
+    
+    AuthService --> MySQL
+    HealthService --> MySQL
+    
+    DataProcessing --> ML
+    PredictionService --> Training
+    
+    DataClean --> FeatureEng
+    FeatureEng --> Cluster
+    FeatureEng --> Training
+    Training --> Evaluation
+    Training --> FileSystem
+    
+    AIService --> DeepSeekAPI
+    
+    %% 样式定义
+    classDef user fill:#e1bee7,stroke:#333,stroke-width:1px
+    classDef frontend fill:#bbdefb,stroke:#333,stroke-width:1px
+    classDef backend fill:#c8e6c9,stroke:#333,stroke-width:1px
+    classDef ml fill:#ffe0b2,stroke:#333,stroke-width:1px
+    classDef storage fill:#ffccbc,stroke:#333,stroke-width:1px
+    classDef external fill:#d1c4e9,stroke:#333,stroke-width:1px
+    
+    class User,Admin user
+    class UI,RouteManagement,StateManagement frontend
+    class API,AuthService,HealthService,PredictionService,DataProcessing,AIService backend
+    class DataClean,FeatureEng,Cluster,Training,Evaluation ml
+    class MySQL,FileSystem storage
+    class DeepSeekAPI external
+            </div>
+        </div>
+        
+        <div class="diagram">
+            <h2>数据流图</h2>
+            <div class="mermaid">
+flowchart TD
+    %% 定义节点
+    User((用户))
+    Admin((管理员))
+    FrontEnd[前端应用]
+    API[后端API]
+    Auth[认证服务]
+    DB[(MySQL数据库)]
+    FileStore[(文件存储)]
+    
+    %% 数据处理模块
+    DataClean[数据清洗模块]
+    FeatureEng[特征工程模块]
+    ML[机器学习模型]
+    
+    %% 分析和预测
+    Cluster[聚类分析]
+    Predict[预测服务]
+    Eval[模型评估]
+    
+    %% AI服务
+    AIChat[AI聊天服务]
+    DeepSeek[DeepSeek API]
+
+    %% 定义数据流
+    User -->|健康数据输入| FrontEnd
+    Admin -->|管理操作| FrontEnd
+    FrontEnd -->|用户认证请求| API
+    FrontEnd -->|健康数据提交| API
+    FrontEnd -->|请求预测结果| API
+    FrontEnd -->|AI问答| API
+    
+    API -->|认证请求| Auth
+    Auth -->|查询用户信息| DB
+    Auth -->|返回认证结果| API
+    
+    API -->|存储健康数据| DB
+    API -->|提取训练数据| DataClean
+    
+    DataClean -->|清洗后数据| FeatureEng
+    FeatureEng -->|特征数据| ML
+    FeatureEng -->|特征数据| Cluster
+    
+    ML -->|训练模型| FileStore
+    ML -->|模型评估| Eval
+    Eval -->|评估结果| DB
+    
+    API -->|预测请求| Predict
+    Predict -->|加载模型| FileStore
+    Predict -->|预测结果| API
+    API -->|返回预测结果| FrontEnd
+    
+    API -->|AI聊天请求| AIChat
+    AIChat -->|转发请求| DeepSeek
+    DeepSeek -->|AI回复| AIChat
+    AIChat -->|处理回复| API
+    API -->|返回AI回复| FrontEnd
+    
+    %% 样式设置
+    classDef frontend fill:#ff9999,stroke:#333,stroke-width:2px
+    classDef backend fill:#9999ff,stroke:#333,stroke-width:2px
+    classDef data fill:#99ff99,stroke:#333,stroke-width:2px
+    classDef ml fill:#ffff99,stroke:#333,stroke-width:2px
+    classDef ai fill:#ff99ff,stroke:#333,stroke-width:2px
+    
+    class FrontEnd frontend
+    class API,Auth backend
+    class DB,FileStore data
+    class DataClean,FeatureEng,ML,Cluster,Predict,Eval ml
+    class AIChat,DeepSeek ai
+            </div>
+        </div>
+    </div>
+    
+    <script>
+        mermaid.initialize({
+            startOnLoad: true,
+            theme: 'default',
+            flowchart: {
+                useMaxWidth: false,
+                htmlLabels: true
+            }
+        });
+    </script>
+</body>
+</html> 

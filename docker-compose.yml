@@ -1,0 +1,55 @@
+version: '3.8'
+
+services:
+  # MySQL数据库服务
+  db:
+    image: mysql:8.0
+    restart: always
+    environment:
+      MYSQL_ROOT_PASSWORD: root
+      MYSQL_DATABASE: diabetes
+      MYSQL_USER: user
+      MYSQL_PASSWORD: password
+    volumes:
+      - mysql_data:/var/lib/mysql
+      - ./backend/diabetes.sql:/docker-entrypoint-initdb.d/init.sql
+    ports:
+      - "127.0.0.1:3306:3306"
+    healthcheck:
+      test: ["CMD", "mysqladmin", "ping", "-h", "localhost", "-ptoot"]
+      interval: 10s
+      timeout: 5s
+      retries: 5
+
+  # 后端Flask服务
+  backend:
+    build: 
+      context: ./backend
+      dockerfile: Dockerfile
+    restart: always
+    depends_on:
+      db:
+        condition: service_healthy
+    environment:
+      - DATABASE_URL=mysql://user:password@db:3306/diabetes
+      - SECRET_KEY=production-key-diabetes-app
+      - JWT_SECRET_KEY=production-jwt-key-diabetes-app
+    volumes:
+      - ./backend/uploads:/app/uploads
+      - ./backend/diabetes_models.pkl:/app/diabetes_models.pkl
+    ports:
+      - "127.0.0.1:5000:5000"
+
+  # 前端服务
+  frontend:
+    build: 
+      context: ./frontend
+      dockerfile: Dockerfile
+    restart: always
+    depends_on:
+      - backend
+    ports:
+      - "127.0.0.1:8080:80"
+
+volumes:
+  mysql_data: 
